@@ -104,7 +104,7 @@ public class TramStopFragment extends Fragment {
         }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> params = new HashMap<String, String>();
+                HashMap<String, String> params = new HashMap<>();
                 params.put("Authorization", "Bearer " + authorizationToken.getToken());
                 return params;
             }
@@ -169,7 +169,7 @@ public class TramStopFragment extends Fragment {
                     int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60;
                     int waitTime = departureTime - nowTime;
 
-                    tramData.waitTime1 = Integer.toString(waitTime >= - 5 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
+                    tramData.waitTime1 = Integer.toString(waitTime >= - 100 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
                     if ((waitTime -1) == 0) {tramData.waitTime1 = "Nu";}
                     tramData.signColor = jsonTram.getString("fgColor");
                     tramData.textColor = jsonTram.getString("bgColor");
@@ -183,7 +183,7 @@ public class TramStopFragment extends Fragment {
                     int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60;
                     int waitTime = departureTime - nowTime;
 
-                    tramData.waitTime2 = Integer.toString(waitTime >= - 5 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
+                    tramData.waitTime2 = Integer.toString(waitTime >= - 100 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
                     if ((waitTime -1) == 0) {tramData.waitTime2 = "Nu";}
                 }
             } catch (JSONException e) {

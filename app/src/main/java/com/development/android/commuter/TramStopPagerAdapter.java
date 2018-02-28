@@ -1,54 +1,33 @@
 package com.development.android.commuter;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * A {@link FragmentStatePagerAdapter} that returns a fragment corresponding to
  * one of the sections/tabs/pages. This provides the data for the {@link ViewPager}.
  */
-public class TramStopPagerAdapter extends FragmentPagerAdapter {
+public class TramStopPagerAdapter extends FragmentStatePagerAdapter {
     // END_INCLUDE (fragment_pager_adapter)
 
-    ArrayList<Map<String, String>> tramStops;
+    private ArrayList<Map<String, String>> tramStops;
 
-    Fragment[] fragmentArray;
+    private int stopCount;
 
-    int stopCount;
+    //private Fragment[] fragmentArray;
 
     TramStopPagerAdapter(FragmentManager fm, ArrayList<Map<String, String>> _tramStops) {
         super(fm);
         tramStops = _tramStops;
         stopCount = tramStops.size();
+
+        //fragmentArray = new Fragment[stopCount];
     }
 
     // BEGIN_INCLUDE (fragment_pager_adapter_getitem)

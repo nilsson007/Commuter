@@ -28,7 +28,7 @@ import java.util.Random;
  * Holds authorization token for vasttrariks API, and updates it when it expiers
  */
 
-public class AuthorizationToken extends Object {
+class AuthorizationToken {
 
     private String key;
     private String secret;
@@ -43,7 +43,7 @@ public class AuthorizationToken extends Object {
         NOT_AVAILABLE
     }
 
-    public TokenState getState() {
+    private TokenState getState() {
         return state;
     }
 
@@ -53,9 +53,7 @@ public class AuthorizationToken extends Object {
 
     private TokenState state;
 
-    private String token = null;
-
-    private Context context;
+    private String token = "";
 
     private ArrayList<UpdateChecker> updateCheckers;
 
@@ -63,39 +61,38 @@ public class AuthorizationToken extends Object {
 
     static private AuthorizationToken authToken;
 
-    private AuthorizationToken(String in_key, String in_secret, Context in_context){
+    private AuthorizationToken(String in_key, String in_secret, Context context){
         key = in_key;
         secret = in_secret;
-        context = in_context;
         queue = Volley.newRequestQueue(context);
         updateCheckers = new ArrayList<>();
         setState(TokenState.NOT_AVAILABLE);
         newToken();
     }
 
-    public String getToken() {
+    String getToken() {
         return token;
     }
 
-    static public AuthorizationToken initializeAuthToken(Context context) {
+    static AuthorizationToken initializeAuthToken(Context context) {
 
         authToken = new AuthorizationToken("NApoXpLxa7OjYnsbyD9DmT_PFp0a", "ucbvykQAMhiglpmu4dCvU3DnOfQa", context);
 
         return authToken;
     }
 
-    static public AuthorizationToken getAuthToken() {
+    static AuthorizationToken getAuthToken() {
 
         return authToken;
     }
 
-    public void newToken() {
+    private void newToken() {
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, "https://api.vasttrafik.se/token",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        JSONObject jsonResponce = null;
+                        JSONObject jsonResponce;
                         try {
                             jsonResponce = new JSONObject(response);
                             setToken(jsonResponce.getString("access_token"));
@@ -117,18 +114,17 @@ public class AuthorizationToken extends Object {
         }) {
             @Override
             protected Map<String,String> getParams(){
-                Map<String,String> params = new HashMap<String, String>();
+                Map<String,String> params = new HashMap<>();
                 params.put("grant_type","client_credentials");
-                params.put("scope", Secure.ANDROID_ID);
+                //params.put("scope", Secure.ANDROID_ID);
                 int num = ran.nextInt(100);
-                //params.put("scope","device_" + num);
-                Log.d("id",Secure.ANDROID_ID);
+                params.put("scope","device_" + num);
 
                 return params;
             }
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> header = new HashMap<String, String>();
+                HashMap<String, String> header = new HashMap<>();
                 String credentials = key +":"+ secret;
                 String auth = "Basic "
                         + Base64.encodeToString(credentials.getBytes(),
@@ -142,14 +138,11 @@ public class AuthorizationToken extends Object {
         queue.add(stringRequest);
     }
 
-    public void refreshToken(UpdateChecker updateChecker) {
+    void refreshToken(UpdateChecker updateChecker) {
 
         updateCheckers.add(updateChecker);
 
-        if (getState() == TokenState.UPDATING) {
-
-        }
-        else {
+        if (getState() != TokenState.UPDATING) {
             newToken();
         }
         setState(TokenState.UPDATING);

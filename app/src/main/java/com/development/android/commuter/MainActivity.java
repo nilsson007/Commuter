@@ -1,7 +1,6 @@
 package com.development.android.commuter;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -45,19 +44,8 @@ public class MainActivity extends FragmentActivity {
     /**
      * The {@link ViewPager} that will host the section contents.
      */
-    ViewPager mViewPager;
 
-    /**
-     * Create the activity. Sets up an {@link android.app.ActionBar} with tabs, and then configures the
-     * {@link ViewPager} contained inside R.layout.activity_main.
-     *
-     * <p>A {@link TramStopPagerAdapter} will be instantiated to hold the different pages of
-     * fragments that are to be displayed. A
-     * {@link android.support.v4.view.ViewPager.SimpleOnPageChangeListener} will also be configured
-     * to receive callbacks when the user swipes between pages in the ViewPager.
-     *
-     * @param savedInstanceState
-     */
+    ViewPager mViewPager;
 
     AuthorizationToken authorizationToken;
 
@@ -73,7 +61,7 @@ public class MainActivity extends FragmentActivity {
         // Load the UI from res/layout/activity_main.xml
         setContentView(R.layout.activity_main);
 
-        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager = findViewById(R.id.pager);
 
         authorizationToken = AuthorizationToken.initializeAuthToken(this);
 
@@ -84,11 +72,14 @@ public class MainActivity extends FragmentActivity {
                 updateView();
             }
         };
+        updateView();
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onRestart() {
+        super.onRestart();
+        tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), new ArrayList<Map<String, String>>());
+        mViewPager.setAdapter(tramStopPagerAdapter);
         updateView();
     }
 
@@ -177,7 +168,7 @@ public class MainActivity extends FragmentActivity {
         }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> params = new HashMap<String, String>();
+                HashMap<String, String> params = new HashMap<>();
                 params.put("Authorization", "Bearer " + authorizationToken.getToken());
                 return params;
             }
