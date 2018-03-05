@@ -32,7 +32,6 @@ class AuthorizationToken {
 
     private String key;
     private String secret;
-    private Random ran = new Random();
 
     private void setToken(String token) {
         this.token = token;
@@ -53,6 +52,8 @@ class AuthorizationToken {
 
     private TokenState state;
 
+    private Context context;
+
     private String token = "";
 
     private ArrayList<UpdateChecker> updateCheckers;
@@ -61,9 +62,10 @@ class AuthorizationToken {
 
     static private AuthorizationToken authToken;
 
-    private AuthorizationToken(String in_key, String in_secret, Context context){
+    private AuthorizationToken(String in_key, String in_secret, Context _context){
         key = in_key;
         secret = in_secret;
+        context = _context;
         queue = Volley.newRequestQueue(context);
         updateCheckers = new ArrayList<>();
         setState(TokenState.NOT_AVAILABLE);
@@ -76,7 +78,7 @@ class AuthorizationToken {
 
     static AuthorizationToken initializeAuthToken(Context context) {
 
-        authToken = new AuthorizationToken("NApoXpLxa7OjYnsbyD9DmT_PFp0a", "ucbvykQAMhiglpmu4dCvU3DnOfQa", context);
+        authToken = new AuthorizationToken(context.getString(R.string.key), context.getString(R.string.secret), context);
 
         return authToken;
     }
@@ -116,9 +118,7 @@ class AuthorizationToken {
             protected Map<String,String> getParams(){
                 Map<String,String> params = new HashMap<>();
                 params.put("grant_type","client_credentials");
-                //params.put("scope", Secure.ANDROID_ID);
-                int num = ran.nextInt(100);
-                params.put("scope","device_" + num);
+                params.put("scope", Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
 
                 return params;
             }

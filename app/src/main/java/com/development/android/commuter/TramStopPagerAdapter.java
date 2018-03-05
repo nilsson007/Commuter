@@ -30,8 +30,6 @@ public class TramStopPagerAdapter extends FragmentStatePagerAdapter {
         //fragmentArray = new Fragment[stopCount];
     }
 
-    // BEGIN_INCLUDE (fragment_pager_adapter_getitem)
-
     /**
      * Get fragment corresponding to a specific position. This will be used to populate the
      * contents of the {@link ViewPager}.
@@ -45,7 +43,7 @@ public class TramStopPagerAdapter extends FragmentStatePagerAdapter {
         Fragment fragment = new TramStopFragment();
         Bundle args = new Bundle();
         args.putString("name", tramStops.get(position).get("name"));
-        args.putString("dist", tramStops.get(position).get("dist"));
+        args.putString("dist", tramStops.get(position).get("dist") + "m");
         args.putString("id", tramStops.get(position).get("id"));
         fragment.setArguments(args);
         return fragment;

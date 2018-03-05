@@ -63,7 +63,12 @@ public class MainActivity extends FragmentActivity {
 
         mViewPager = findViewById(R.id.pager);
 
-        authorizationToken = AuthorizationToken.initializeAuthToken(this);
+        if (authorizationToken == null) {
+            authorizationToken = AuthorizationToken.initializeAuthToken(this);
+         } else {
+            authorizationToken = AuthorizationToken.getAuthToken();
+            Log.i("position","getAuthToken");
+        }
 
         updateChecker = new UpdateChecker(this) {
 
@@ -81,9 +86,16 @@ public class MainActivity extends FragmentActivity {
         tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), new ArrayList<Map<String, String>>());
         mViewPager.setAdapter(tramStopPagerAdapter);
         updateView();
+        Log.i("position","onRestart");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 
     private void updateView() {
+        Log.i("position","updateView");
         FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -113,6 +125,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void sendRequest(String url) {
+        Log.i("position","sendRequest");
         StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override

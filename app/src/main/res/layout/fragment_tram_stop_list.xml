@@ -10,22 +10,20 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="10sp"
+            android:textSize="15sp"
             android:layout_centerInParent="true"
-            android:text="name"
             android:id="@+id/tram_stop_name"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:textSize="10sp"
-            android:text="distance"
+            android:layout_alignParentEnd="true"
+            android:textSize="15sp"
             android:id="@+id/tram_stop_distance"/>
     </RelativeLayout>
 
     <ListView
         android:id="@+id/tram_stop_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></ListView>
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

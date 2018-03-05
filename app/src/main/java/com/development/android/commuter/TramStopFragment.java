@@ -67,16 +67,23 @@ public class TramStopFragment extends Fragment {
                     @Override
                     public void onResponse(String response) {
                         ArrayList<Tram> tramList = new ArrayList<>();
+                        JSONObject jsonResponse = new JSONObject();
                         try {
-                            JSONObject jsonResponse = new JSONObject(response);
-                            jsonResponse = (JSONObject) jsonResponse.get("DepartureBoard");
-                            JSONArray jsonArray = (JSONArray) jsonResponse.get("Departure");
-                            tramList = getTramArray(jsonArray);
+                            jsonResponse = new JSONObject(response);
                         } catch (JSONException e) {
                             e.printStackTrace();
                             Log.i("Response", response);
                         }
-
+                        JSONArray jsonArray  = jsonResponse.optJSONObject("DepartureBoard").optJSONArray("Departure");
+                        if (jsonArray != null) {
+                            tramList = getTramArray(jsonArray);
+                        }
+                        else {
+                            jsonResponse = jsonResponse.optJSONObject("DepartureBoard").optJSONObject("Departure");
+                        //}) != null) {
+                            jsonArray.put(jsonResponse.toString());
+                            tramList = getTramArray(jsonArray);
+                        }
                         TramStopListAdapter nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList);
                         nextTramList.setAdapter(nextTramAdapter);
                     }
@@ -156,6 +163,7 @@ public class TramStopFragment extends Fragment {
         ArrayList<Tram> tramList = new ArrayList<>();
         ArrayList<String> checkList = new ArrayList<>();
         Calendar time = Calendar.getInstance();
+        int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60;
 
         for (int i = 0; i < jsonTramList.length(); i++)
         {
@@ -166,7 +174,6 @@ public class TramStopFragment extends Fragment {
                     tramData.direction = jsonTram.getString("direction");
 
                     int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
-                    int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60;
                     int waitTime = departureTime - nowTime;
 
                     tramData.waitTime1 = Integer.toString(waitTime >= - 100 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
@@ -180,7 +187,6 @@ public class TramStopFragment extends Fragment {
                     Tram tramData = tramList.get(checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction")));
 
                     int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
-                    int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60;
                     int waitTime = departureTime - nowTime;
 
                     tramData.waitTime2 = Integer.toString(waitTime >= - 100 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
