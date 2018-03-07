@@ -71,6 +71,7 @@ public class TramStopFragment extends Fragment {
                         else {
                             jsonResponse = jsonResponse.optJSONObject("DepartureBoard").optJSONObject("Departure");
                             if (jsonResponse != null) {
+                                jsonArray = new JSONArray();
                                 jsonArray.put(jsonResponse.toString());
                                 tramList = getTramArray(jsonArray);
                             }
