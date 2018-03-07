@@ -20,14 +20,10 @@ public class TramStopPagerAdapter extends FragmentStatePagerAdapter {
 
     private int stopCount;
 
-    //private Fragment[] fragmentArray;
-
     TramStopPagerAdapter(FragmentManager fm, ArrayList<Map<String, String>> _tramStops) {
         super(fm);
         tramStops = _tramStops;
         stopCount = tramStops.size();
-
-        //fragmentArray = new Fragment[stopCount];
     }
 
     /**
@@ -47,18 +43,6 @@ public class TramStopPagerAdapter extends FragmentStatePagerAdapter {
         args.putString("id", tramStops.get(position).get("id"));
         fragment.setArguments(args);
         return fragment;
-
-
-        /*if (fragmentArray[position] == null) {
-            Fragment fragment = new TramStopFragment();
-            Bundle args = new Bundle();
-            args.putString("name", tramStops.get(position).get("name"));
-            args.putString("dist", tramStops.get(position).get("dist"));
-            args.putString("id", tramStops.get(position).get("id"));
-            fragment.setArguments(args);
-            fragmentArray[position] = fragment;
-        }
-        return fragmentArray[position];*/
     }
 
     /**

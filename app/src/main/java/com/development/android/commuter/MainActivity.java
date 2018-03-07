@@ -2,6 +2,7 @@ package com.development.android.commuter;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -49,8 +50,6 @@ public class MainActivity extends FragmentActivity {
 
     AuthorizationToken authorizationToken;
 
-    UpdateChecker updateChecker;
-
     String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/location.nearbystops?originCoordLat=";
 
     Location location;
@@ -58,25 +57,16 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i("position","onCreate");
         // Load the UI from res/layout/activity_main.xml
         setContentView(R.layout.activity_main);
 
         mViewPager = findViewById(R.id.pager);
-
-        if (authorizationToken == null) {
-            authorizationToken = AuthorizationToken.initializeAuthToken(this);
-         } else {
-            authorizationToken = AuthorizationToken.getAuthToken();
-            Log.i("position","getAuthToken");
+        if (savedInstanceState != null) {
+            authorizationToken = AuthorizationToken.initializeAuthToken(this, savedInstanceState.getString("token"));
+        } else {
+            authorizationToken = AuthorizationToken.initializeAuthToken(this, null);
         }
-
-        updateChecker = new UpdateChecker(this) {
-
-            @Override
-            public void onUpdate() {
-                updateView();
-            }
-        };
         updateView();
     }
 
@@ -91,7 +81,15 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        Log.i("position","onSaveInstanceState");
+        outState.putString("token", authorizationToken.getToken());
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Log.i("position","onConfigChange");
     }
 
     private void updateView() {
@@ -165,7 +163,13 @@ public class MainActivity extends FragmentActivity {
                 if (error.networkResponse != null) {
                     switch (error.networkResponse.statusCode) {
                         case 401:
-                            authorizationToken.refreshToken(updateChecker);
+                            authorizationToken.refreshToken(new UpdateChecker() {
+
+                                @Override
+                                public void onUpdate() {
+                                    updateView();
+                                }
+                            });
                             break;
                         default:
                             Log.i("NetworkResponse", Integer.toString(error.networkResponse.statusCode));
@@ -173,7 +177,13 @@ public class MainActivity extends FragmentActivity {
                     }
                 } else {
                     if (authorizationToken.getToken() == null) {
-                        authorizationToken.refreshToken(updateChecker);
+                        authorizationToken.refreshToken(new UpdateChecker() {
+
+                            @Override
+                            public void onUpdate() {
+                                updateView();
+                            }
+                        });
                     }
                     Log.i("VollyError", error.toString());
                 }

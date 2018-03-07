@@ -37,8 +37,6 @@ public class TramStopFragment extends Fragment {
      */
     AuthorizationToken authorizationToken;
 
-    UpdateChecker updateChecker;
-
     ListView nextTramList;
 
     String id;
@@ -51,14 +49,6 @@ public class TramStopFragment extends Fragment {
 
         authorizationToken = AuthorizationToken.getAuthToken();
 
-        updateChecker = new UpdateChecker(this) {
-
-            @Override
-            public void onUpdate() {
-                TramStopFragment tramStopParent = (TramStopFragment) parent;
-                tramStopParent.updateView();
-            }
-        };
     }
 
     private void updateView() {
@@ -80,9 +70,10 @@ public class TramStopFragment extends Fragment {
                         }
                         else {
                             jsonResponse = jsonResponse.optJSONObject("DepartureBoard").optJSONObject("Departure");
-                        //}) != null) {
-                            jsonArray.put(jsonResponse.toString());
-                            tramList = getTramArray(jsonArray);
+                            if (jsonResponse != null) {
+                                jsonArray.put(jsonResponse.toString());
+                                tramList = getTramArray(jsonArray);
+                            }
                         }
                         TramStopListAdapter nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList);
                         nextTramList.setAdapter(nextTramAdapter);
@@ -94,7 +85,13 @@ public class TramStopFragment extends Fragment {
                 if (error.networkResponse != null) {
                     switch (error.networkResponse.statusCode) {
                         case 401:
-                            authorizationToken.refreshToken(updateChecker);
+                            authorizationToken.refreshToken(new UpdateChecker() {
+
+                                @Override
+                                public void onUpdate() {
+                                    updateView();
+                                }
+                            });
                             break;
                         default:
                             Log.i("NetworkResponse", Integer.toString(error.networkResponse.statusCode));
@@ -103,7 +100,13 @@ public class TramStopFragment extends Fragment {
                 }
                 else {
                     if (authorizationToken.getToken() == null) {
-                        authorizationToken.refreshToken(updateChecker);
+                        authorizationToken.refreshToken(new UpdateChecker() {
+
+                            @Override
+                            public void onUpdate() {
+                                updateView();
+                            }
+                        });
                     }
                     Log.i("NetworkResponse", error.toString());
                 }

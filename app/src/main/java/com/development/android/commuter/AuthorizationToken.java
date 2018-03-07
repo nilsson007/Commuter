@@ -52,8 +52,6 @@ class AuthorizationToken {
 
     private TokenState state;
 
-    private Context context;
-
     private String token = "";
 
     private ArrayList<UpdateChecker> updateCheckers;
@@ -62,10 +60,9 @@ class AuthorizationToken {
 
     static private AuthorizationToken authToken;
 
-    private AuthorizationToken(String in_key, String in_secret, Context _context){
+    private AuthorizationToken(String in_key, String in_secret, Context context){
         key = in_key;
         secret = in_secret;
-        context = _context;
         queue = Volley.newRequestQueue(context);
         updateCheckers = new ArrayList<>();
         setState(TokenState.NOT_AVAILABLE);
@@ -76,9 +73,13 @@ class AuthorizationToken {
         return token;
     }
 
-    static AuthorizationToken initializeAuthToken(Context context) {
+    static AuthorizationToken initializeAuthToken(Context context, String saved_token) {
 
         authToken = new AuthorizationToken(context.getString(R.string.key), context.getString(R.string.secret), context);
+
+        if (saved_token != null) {
+            authToken.setToken(saved_token);
+        }
 
         return authToken;
     }
@@ -118,7 +119,7 @@ class AuthorizationToken {
             protected Map<String,String> getParams(){
                 Map<String,String> params = new HashMap<>();
                 params.put("grant_type","client_credentials");
-                params.put("scope", Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
+                params.put("scope", "hej");
 
                 return params;
             }
