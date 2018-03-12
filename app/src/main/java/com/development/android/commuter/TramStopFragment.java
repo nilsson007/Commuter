@@ -193,7 +193,6 @@ public class TramStopFragment extends Fragment {
                     if ((waitTime) == 0) {tramData.waitTime1 = "Nu";}
                     tramData.direction = jsonTram.getString("direction");
                     tramData.textColor = jsonTram.getString("bgColor");
-                    Drawable bg = R.drawable.tram_item_background;
                     tramData.signColor = jsonTram.getString("fgColor");
                     tramData.waitTime2 = "-";
                     tramList.add(tramData);
