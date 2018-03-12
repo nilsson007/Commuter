@@ -1,5 +1,6 @@
 package com.development.android.commuter;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -25,6 +26,8 @@ import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * A dummy fragment representing a section of the app, but that simply displays dummy text.
@@ -125,6 +128,11 @@ public class TramStopFragment extends Fragment {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_tram_stop_list, container, false);
@@ -175,15 +183,18 @@ public class TramStopFragment extends Fragment {
                 JSONObject jsonTram = jsonTramList.getJSONObject(i);
                 if (checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction")) == -1) {
                     Tram tramData = new Tram(jsonTram.getString("sname"));
-                    tramData.direction = jsonTram.getString("direction");
 
                     int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
-                    int waitTime = departureTime - nowTime;
+                    int waitTime = departureTime - nowTime -1;
 
-                    tramData.waitTime1 = Integer.toString(waitTime >= - 100 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
-                    if ((waitTime -1) == 0) {tramData.waitTime1 = "Nu";}
-                    tramData.signColor = jsonTram.getString("fgColor");
+                    if (waitTime <= -100) {tramData.waitTime1 = Integer.toString(60 * 24  - nowTime + departureTime);}
+                    else if (waitTime >= -1) {tramData.waitTime1 = Integer.toString(waitTime);}
+                    else { continue;}
+                    if ((waitTime) == 0) {tramData.waitTime1 = "Nu";}
+                    tramData.direction = jsonTram.getString("direction");
                     tramData.textColor = jsonTram.getString("bgColor");
+                    Drawable bg = R.drawable.tram_item_background;
+                    tramData.signColor = jsonTram.getString("fgColor");
                     tramData.waitTime2 = "-";
                     tramList.add(tramData);
                     checkList.add(jsonTram.get("sname") + "" + jsonTram.get("direction"));
@@ -191,15 +202,30 @@ public class TramStopFragment extends Fragment {
                     Tram tramData = tramList.get(checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction")));
 
                     int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
-                    int waitTime = departureTime - nowTime;
+                    int waitTime = departureTime - nowTime - 1;
 
-                    tramData.waitTime2 = Integer.toString(waitTime >= - 100 ? waitTime - 1 : 60 * 24  - nowTime + departureTime - 1);
-                    if ((waitTime -1) == 0) {tramData.waitTime2 = "Nu";}
+                    if (waitTime <= -100) {tramData.waitTime2 = Integer.toString(60 * 24  - nowTime + departureTime);}
+                    else if (waitTime >= -1) {tramData.waitTime2 = Integer.toString(waitTime);}
+                    if ((waitTime) == 0) {tramData.waitTime2 = "Nu";}
+
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
+        Collections.sort(tramList,  new Comparator<Tram>() {
+            @Override
+            public int compare(Tram item, Tram t1) {
+                String s1 = item.number;
+                String s2 = t1.number;
+                try {
+                    return Integer.parseInt(s1) - Integer.parseInt(s2);
+                } catch (NumberFormatException e) {
+                    return s1.compareToIgnoreCase(s2);
+                }
+            }
+
+        });
         return tramList;
     }
 }
