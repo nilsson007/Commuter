@@ -37,7 +37,6 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
         tramSign.setBackground(bg);
         tramSign.setText(tram.number);
         tramSign.setTextColor(Color.parseColor(tram.textColor));
-        //tramSign.setBackgroundColor(Color.parseColor(tram.signColor));
         waitText1.setText(tram.waitTime1);
         waitText2.setText(tram.waitTime2);
         // Return the completed view to render on screen

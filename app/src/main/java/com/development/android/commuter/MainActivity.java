@@ -19,6 +19,8 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
@@ -42,6 +44,8 @@ public class MainActivity extends FragmentActivity {
 
     TramStopPagerAdapter tramStopPagerAdapter;
 
+    static final byte MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 67;
+
     /**
      * The {@link ViewPager} that will host the section contents.
      */
@@ -54,12 +58,43 @@ public class MainActivity extends FragmentActivity {
 
     Location location;
 
+    LocationCallback mLocationCallback;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i("position","onCreate");
         // Load the UI from res/layout/activity_main.xml
         setContentView(R.layout.activity_main);
+
+        mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    // Update UI with location data
+                    // ...
+                }
+            };
+        };
+
+        FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+            } else {
+                // No explanation needed; request the permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
+            return;
+        }
+        else {
+            //mFusedLocationClient.requestLocationUpdates();
+        }
 
         mViewPager = findViewById(R.id.pager);
         if (savedInstanceState != null) {
@@ -95,31 +130,56 @@ public class MainActivity extends FragmentActivity {
     private void updateView() {
         Log.i("position","updateView");
         FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+            } else {
+                // No explanation needed; request the permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
             return;
         }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location _location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (_location != null) {
+        else {
+            mFusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location _location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (_location != null) {
 
-                            location = _location;
+                                location = _location;
 
-                            String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=20&format=json";
+                                String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=20&format=json";
 
-                            sendRequest(url);
+                                sendRequest(url);
+                            }
                         }
-                    }
-                });
+                    });
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    updateView();
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+        }
     }
 
     private void sendRequest(String url) {
@@ -136,7 +196,7 @@ public class MainActivity extends FragmentActivity {
                             JSONArray jsonStopList = (JSONArray) jsonResponse.get("StopLocation");
                             for (int i = 0; i < jsonStopList.length(); i++) {
                                 JSONObject tmpJSONObject = (JSONObject) jsonStopList.get(i);
-                                if (tmpJSONObject.getString("id").endsWith("0")) {
+                                if (tmpJSONObject.getString("id").endsWith("00")) {
                                     Map<String, String> tmpMap = new HashMap<>();
                                     tmpMap.put("name", tmpJSONObject.getString("name"));
                                     tmpMap.put("id", tmpJSONObject.getString("id"));

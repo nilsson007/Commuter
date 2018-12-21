@@ -128,11 +128,6 @@ public class TramStopFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_tram_stop_list, container, false);
@@ -155,7 +150,7 @@ public class TramStopFragment extends Fragment {
         String hour = getZeroAddNowString(time.get(Calendar.HOUR_OF_DAY));
         String min = getZeroAddNowString(time.get(Calendar.MINUTE));
 
-        url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=59&format=json&needJourneyDetail=0&maxDeparturesPerLine=2";
+        url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=120&format=json&needJourneyDetail=0&maxDeparturesPerLine=3";
 
         updateView();
 
@@ -200,13 +195,19 @@ public class TramStopFragment extends Fragment {
                 } else {
                     Tram tramData = tramList.get(checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction")));
 
-                    int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
-                    int waitTime = departureTime - nowTime - 1;
+                    if (tramData.waitTime2.equals("-")) {
+                        int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0, 2)) * 60);
+                        int waitTime = departureTime - nowTime - 1;
 
-                    if (waitTime <= -100) {tramData.waitTime2 = Integer.toString(60 * 24  - nowTime + departureTime);}
-                    else if (waitTime >= -1) {tramData.waitTime2 = Integer.toString(waitTime);}
-                    if ((waitTime) == 0) {tramData.waitTime2 = "Nu";}
-
+                        if (waitTime <= -100) {
+                            tramData.waitTime2 = Integer.toString(60 * 24 - nowTime + departureTime);
+                        } else if (waitTime >= -1) {
+                            tramData.waitTime2 = Integer.toString(waitTime);
+                        }
+                        if ((waitTime) == 0) {
+                            tramData.waitTime2 = "Nu";
+                        }
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

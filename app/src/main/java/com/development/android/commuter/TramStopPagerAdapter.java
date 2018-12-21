@@ -45,6 +45,11 @@ public class TramStopPagerAdapter extends FragmentStatePagerAdapter {
         return fragment;
     }
 
+    @Override
+    public int getItemPosition(Object object) {
+        return POSITION_NONE;
+    }
+
     /**
      * Get number of pages the {@link ViewPager} should render.
      *
