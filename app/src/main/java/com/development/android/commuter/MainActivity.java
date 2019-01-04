@@ -2,7 +2,6 @@ package com.development.android.commuter;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -18,6 +17,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
@@ -46,6 +46,8 @@ public class MainActivity extends FragmentActivity {
 
     static final byte MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 67;
 
+    static final int MIN_ACCURACY = 50;
+
     /**
      * The {@link ViewPager} that will host the section contents.
      */
@@ -58,7 +60,26 @@ public class MainActivity extends FragmentActivity {
 
     Location location;
 
-    LocationCallback mLocationCallback;
+    FusedLocationProviderClient mFusedLocationClient;
+
+    LocationCallback locationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            if (locationResult == null) {
+                return;
+            }
+            for (Location _location : locationResult.getLocations()) {
+                if (_location.getAccuracy() < MIN_ACCURACY) {
+                    location = _location;
+                    updateView();
+                    mFusedLocationClient.removeLocationUpdates(locationCallback);
+                    Log.i("position", "LocationUpdate");
+                }
+            }
+        }
+    };
+
+    LocationRequest locationRequest = new LocationRequest();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,42 +88,29 @@ public class MainActivity extends FragmentActivity {
         // Load the UI from res/layout/activity_main.xml
         setContentView(R.layout.activity_main);
 
-        mLocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
-                for (Location location : locationResult.getLocations()) {
-                    // Update UI with location data
-                    // ...
-                }
-            };
-        };
-
-        FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-            } else {
-                // No explanation needed; request the permission
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-            }
-            return;
-        }
-        else {
-            //mFusedLocationClient.requestLocationUpdates();
-        }
-
         mViewPager = findViewById(R.id.pager);
         if (savedInstanceState != null) {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, savedInstanceState.getString("token"));
         } else {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, null);
         }
-        updateView();
+
+        // initialize location request
+        locationRequest.setFastestInterval(500);
+        locationRequest.setInterval(1000);
+
+        if (requestLocationPermission())  {
+            mFusedLocationClient.requestLocationUpdates(locationRequest,
+                    locationCallback,
+                    null /* Looper */
+            );
+        }
+        // Init debug location
+        /*
+        location = new Location("PASSIVE_PROVIDER");
+        location.setLatitude(57.702833);
+        location.setLongitude(11.978622);
+        */
     }
 
     @Override
@@ -110,8 +118,25 @@ public class MainActivity extends FragmentActivity {
         super.onRestart();
         tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), new ArrayList<Map<String, String>>());
         mViewPager.setAdapter(tramStopPagerAdapter);
-        updateView();
+        if (requestLocationPermission())  {
+            mFusedLocationClient.requestLocationUpdates(locationRequest,
+                    locationCallback,
+                    null /* Looper */
+            );
+        }
         Log.i("position","onRestart");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mFusedLocationClient.removeLocationUpdates(locationCallback);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mFusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     @Override
@@ -121,27 +146,9 @@ public class MainActivity extends FragmentActivity {
         super.onSaveInstanceState(outState);
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        Log.i("position","onConfigChange");
-    }
-
-    private void updateView() {
+    public void updateView() {
         Log.i("position","updateView");
-        FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-            } else {
-                // No explanation needed; request the permission
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-            }
-            return;
-        }
-        else {
+        if (requestLocationPermission()) {
             mFusedLocationClient.getLastLocation()
                     .addOnSuccessListener(new OnSuccessListener<Location>() {
                         @Override
@@ -151,7 +158,7 @@ public class MainActivity extends FragmentActivity {
 
                                 location = _location;
 
-                                String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=20&format=json";
+                                String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=200&format=json";
 
                                 sendRequest(url);
                             }
@@ -182,6 +189,24 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    private boolean requestLocationPermission() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+            } else {
+                // No explanation needed; request the permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
     private void sendRequest(String url) {
         Log.i("position","sendRequest");
         StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
@@ -204,8 +229,9 @@ public class MainActivity extends FragmentActivity {
                                     double tmpLat = tmpJSONObject.getDouble("lat");
                                     double tmpLon = tmpJSONObject.getDouble("lon");
 
-                                    tmpMap.put("dist", Integer.toString((int)getDistance(location.getLatitude(),location.getLongitude(),tmpLat,tmpLon)));
-
+                                    float result[] = new float[1];
+                                    Location.distanceBetween(location.getLatitude(),location.getLongitude(),tmpLat,tmpLon,result);
+                                    tmpMap.put("dist", Integer.toString((int)result[0]));
                                     stopsList.add(tmpMap);
                                 }
                             }
@@ -258,16 +284,5 @@ public class MainActivity extends FragmentActivity {
         };
         RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(nextTramRequest);
-    }
-    double getDistance(double lat1, double lon1, double lat2, double lon2){  // generally used geo measurement function
-        double R = 6378.137; // Radius of earth in KM
-        double dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
-        double dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                        Math.sin(dLon/2) * Math.sin(dLon/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        double d = R * c;
-        return d * 1000; // meters
     }
 }

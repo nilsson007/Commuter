@@ -1,8 +1,8 @@
 package com.development.android.commuter;
 
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,7 +52,6 @@ public class TramStopFragment extends Fragment {
     public TramStopFragment() {
 
         authorizationToken = AuthorizationToken.getAuthToken();
-
     }
 
     private void updateView() {
@@ -81,6 +81,12 @@ public class TramStopFragment extends Fragment {
                         }
                         TramStopListAdapter nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList);
                         nextTramList.setAdapter(nextTramAdapter);
+                        /*nextTramList.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                v.setBackgroundColor(0xff0000ff);
+                            }
+                        });*/
                     }
 
                 }, new Response.ErrorListener() {
@@ -135,6 +141,19 @@ public class TramStopFragment extends Fragment {
         TextView stopName = rootView.findViewById(R.id.tram_stop_name);
         TextView stopDist = rootView.findViewById(R.id.tram_stop_distance);
 
+        // Initialize update by swipe.
+        SwipeRefreshLayout swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
+        final MainActivity parent = (MainActivity) this.getContext();
+        swipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        Log.i("position", "onRefresh called from SwipeRefreshLayout");
+                        parent.updateView();
+                    }
+                }
+        );
+
         String name = getArguments().getString("name");
         String dist = getArguments().getString("dist");
         id = getArguments().getString("id");
@@ -144,11 +163,11 @@ public class TramStopFragment extends Fragment {
 
         Calendar time = Calendar.getInstance();
 
-        String year = Integer.toString(time.get(Calendar.YEAR));
-        String month = getZeroAddNowString(time.get(Calendar.MONTH) + 1 );
-        String day = getZeroAddNowString(time.get(Calendar.DAY_OF_MONTH));
-        String hour = getZeroAddNowString(time.get(Calendar.HOUR_OF_DAY));
-        String min = getZeroAddNowString(time.get(Calendar.MINUTE));
+        String year  = String.format(Locale.US,"%04d", time.get(Calendar.YEAR));
+        String month = String.format(Locale.US,"%02d", time.get(Calendar.MONTH) + 1 );
+        String day   = String.format(Locale.US,"%02d", time.get(Calendar.DAY_OF_MONTH));
+        String hour  = String.format(Locale.US,"%02d", time.get(Calendar.HOUR_OF_DAY));
+        String min   = String.format(Locale.US,"%02d", time.get(Calendar.MINUTE));
 
         url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=120&format=json&needJourneyDetail=0&maxDeparturesPerLine=3";
 
@@ -156,15 +175,9 @@ public class TramStopFragment extends Fragment {
 
         return rootView;
     }
-    String getZeroAddNowString(int nowInt) {
-        String now;
-        if (nowInt < 10) {
-            now = "0" + nowInt;
-        } else {
-            now = Integer.toString(nowInt);
-        }
-        return now;
-    }
+
+
+
     ArrayList<Tram> getTramArray(JSONArray jsonTramList) {
 
         ArrayList<Tram> tramList = new ArrayList<>();
@@ -179,7 +192,12 @@ public class TramStopFragment extends Fragment {
                 if (checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction")) == -1) {
                     Tram tramData = new Tram(jsonTram.getString("sname"));
 
-                    int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
+                    int departureTime;
+                    if (jsonTram.isNull("rtTime")){
+                        departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
+                    } else {
+                        departureTime = (Integer.parseInt(jsonTram.getString("rtTime").substring(3)) + Integer.parseInt(jsonTram.getString("rtTime").substring(0, 2)) * 60);
+                    }
                     int waitTime = departureTime - nowTime -1;
 
                     if (waitTime <= -100) {tramData.waitTime1 = Integer.toString(60 * 24  - nowTime + departureTime);}
