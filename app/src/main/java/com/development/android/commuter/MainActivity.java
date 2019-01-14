@@ -2,8 +2,10 @@ package com.development.android.commuter;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -46,7 +48,7 @@ public class MainActivity extends FragmentActivity {
 
     static final byte MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 67;
 
-    static final int MIN_ACCURACY = 50;
+    static final int MIN_ACCURACY = 100;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -60,7 +62,21 @@ public class MainActivity extends FragmentActivity {
 
     Location location;
 
+    boolean orientationChange = false;
+
     FusedLocationProviderClient mFusedLocationClient;
+
+    CountDownTimer locationUpdateTimer = new CountDownTimer(2000, 2000) {
+
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+        public void onFinish() {
+            mFusedLocationClient.removeLocationUpdates(locationCallback);
+            updateView();
+        }
+    };
 
     LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -71,9 +87,9 @@ public class MainActivity extends FragmentActivity {
             for (Location _location : locationResult.getLocations()) {
                 if (_location.getAccuracy() < MIN_ACCURACY) {
                     location = _location;
+                    locationUpdateTimer.cancel();
                     updateView();
                     mFusedLocationClient.removeLocationUpdates(locationCallback);
-                    Log.i("position", "LocationUpdate");
                 }
             }
         }
@@ -96,15 +112,13 @@ public class MainActivity extends FragmentActivity {
         }
 
         // initialize location request
-        locationRequest.setFastestInterval(500);
-        locationRequest.setInterval(1000);
+        locationRequest.setFastestInterval(100);
+        locationRequest.setInterval(200);
 
-        if (requestLocationPermission())  {
-            mFusedLocationClient.requestLocationUpdates(locationRequest,
-                    locationCallback,
-                    null /* Looper */
-            );
-        }
+        if (orientationChange) updateView();
+        else requestLocationUpdate();
+
+        int or = this.getResources().getConfiguration().orientation;
         // Init debug location
         /*
         location = new Location("PASSIVE_PROVIDER");
@@ -118,12 +132,7 @@ public class MainActivity extends FragmentActivity {
         super.onRestart();
         tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), new ArrayList<Map<String, String>>());
         mViewPager.setAdapter(tramStopPagerAdapter);
-        if (requestLocationPermission())  {
-            mFusedLocationClient.requestLocationUpdates(locationRequest,
-                    locationCallback,
-                    null /* Looper */
-            );
-        }
+        requestLocationUpdate();
         Log.i("position","onRestart");
     }
 
@@ -146,7 +155,7 @@ public class MainActivity extends FragmentActivity {
         super.onSaveInstanceState(outState);
     }
 
-    public void updateView() {
+    private void updateView() {
         Log.i("position","updateView");
         if (requestLocationPermission()) {
             mFusedLocationClient.getLastLocation()
@@ -178,7 +187,7 @@ public class MainActivity extends FragmentActivity {
 
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    updateView();
+                    requestLocationUpdate();
                 } else {
 
                     // permission denied, boo! Disable the
@@ -186,6 +195,15 @@ public class MainActivity extends FragmentActivity {
                 }
                 return;
             }
+        }
+    }
+    public void requestLocationUpdate() {
+        if (requestLocationPermission())  {
+            mFusedLocationClient.requestLocationUpdates(locationRequest,
+                    locationCallback,
+                    null /* Looper */
+            );
+            locationUpdateTimer.start();
         }
     }
 
@@ -223,7 +241,9 @@ public class MainActivity extends FragmentActivity {
                                 JSONObject tmpJSONObject = (JSONObject) jsonStopList.get(i);
                                 if (tmpJSONObject.getString("id").endsWith("00")) {
                                     Map<String, String> tmpMap = new HashMap<>();
-                                    tmpMap.put("name", tmpJSONObject.getString("name"));
+                                    String tmpName = tmpJSONObject.getString("name");
+                                    tmpName = tmpName.substring(0, tmpName.indexOf(','));
+                                    tmpMap.put("name", tmpName);
                                     tmpMap.put("id", tmpJSONObject.getString("id"));
 
                                     double tmpLat = tmpJSONObject.getDouble("lat");
@@ -253,7 +273,7 @@ public class MainActivity extends FragmentActivity {
 
                                 @Override
                                 public void onUpdate() {
-                                    updateView();
+                                    requestLocationUpdate();
                                 }
                             });
                             break;
@@ -267,7 +287,7 @@ public class MainActivity extends FragmentActivity {
 
                             @Override
                             public void onUpdate() {
-                                updateView();
+                                requestLocationUpdate();
                             }
                         });
                     }
@@ -277,9 +297,7 @@ public class MainActivity extends FragmentActivity {
         }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> params = new HashMap<>();
-                params.put("Authorization", "Bearer " + authorizationToken.getToken());
-                return params;
+                return authorizationToken.getTokenParams();
             }
         };
         RequestQueue queue = Volley.newRequestQueue(this);

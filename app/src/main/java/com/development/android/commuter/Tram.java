@@ -7,6 +7,7 @@ public class Tram {
     public String waitTime2;
     public String signColor;
     public String textColor;
+    public String journeyUrl;
 
     Tram(String shortName) {
         this.number = shortName;

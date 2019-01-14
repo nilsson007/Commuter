@@ -36,6 +36,7 @@ class AuthorizationToken {
     private void setToken(String token) {
         this.token = token;
     }
+
     public enum TokenState {
         OK,
         UPDATING,
@@ -60,7 +61,7 @@ class AuthorizationToken {
 
     static private AuthorizationToken authToken;
 
-    private AuthorizationToken(String in_key, String in_secret, Context context){
+    private AuthorizationToken(String in_key, String in_secret, Context context) {
         key = in_key;
         secret = in_secret;
         queue = Volley.newRequestQueue(context);
@@ -71,6 +72,12 @@ class AuthorizationToken {
 
     String getToken() {
         return token;
+    }
+
+    HashMap<String, String> getTokenParams() {
+        HashMap<String, String> params = new HashMap<>();
+        params.put("Authorization", "Bearer " + getToken());
+        return params;
     }
 
     static AuthorizationToken initializeAuthToken(Context context, String saved_token) {

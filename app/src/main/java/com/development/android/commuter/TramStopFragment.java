@@ -7,7 +7,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
@@ -45,6 +50,8 @@ public class TramStopFragment extends Fragment {
 
     String id;
 
+    public String name;
+
     static String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=";
 
     String url;
@@ -59,34 +66,39 @@ public class TramStopFragment extends Fragment {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        ArrayList<Tram> tramList = new ArrayList<>();
-                        JSONObject jsonResponse = new JSONObject();
-                        try {
-                            jsonResponse = new JSONObject(response);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.i("Response", response);
-                        }
-                        JSONArray jsonArray  = jsonResponse.optJSONObject("DepartureBoard").optJSONArray("Departure");
-                        if (jsonArray != null) {
-                            tramList = getTramArray(jsonArray);
-                        }
-                        else {
-                            jsonResponse = jsonResponse.optJSONObject("DepartureBoard").optJSONObject("Departure");
-                            if (jsonResponse != null) {
-                                jsonArray = new JSONArray();
-                                jsonArray.put(jsonResponse.toString());
-                                tramList = getTramArray(jsonArray);
-                            }
-                        }
-                        TramStopListAdapter nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList);
+                        ArrayList<Tram> tramList = getTramArray(response);
+                        final TramStopListAdapter nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList);
                         nextTramList.setAdapter(nextTramAdapter);
-                        /*nextTramList.setOnClickListener(new View.OnClickListener() {
+                        nextTramList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override
-                            public void onClick(View v) {
-                                v.setBackgroundColor(0xff0000ff);
+                            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                ListView lv = view.findViewById(R.id.nextStopList);
+
+                                final Tram tram = ((Tram)parent.getItemAtPosition(position));
+                                String journeyUrl = tram.journeyUrl;
+                                StringRequest journeyRequest = new StringRequest(Request.Method.GET, journeyUrl,
+                                        getJourneyRequestResponse(lv), new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        Log.i("Poop", error.toString());
+
+                                    }}) {
+                                    @Override
+                                    public Map<String, String> getHeaders() throws AuthFailureError {
+                                        return authorizationToken.getTokenParams();
+                                    }
+                                };
+                                RequestQueue queue = Volley.newRequestQueue(getContext());
+                                queue.add(journeyRequest);
+                                View listItem = (View)lv.getChildAt(0);
+
+                                lv.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1000)); //listItem.getMeasuredHeight()*3));
+                                lv.setNestedScrollingEnabled(true);
+
+                                ((SwipeRefreshLayout)nextTramList.getParent()).setEnabled(false);
+                                Log.i("position","onItemCick");
                             }
-                        });*/
+                        });
                     }
 
                 }, new Response.ErrorListener() {
@@ -124,9 +136,7 @@ public class TramStopFragment extends Fragment {
         }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> params = new HashMap<>();
-                params.put("Authorization", "Bearer " + authorizationToken.getToken());
-                return params;
+                return authorizationToken.getTokenParams();
             }
         };
         RequestQueue queue = Volley.newRequestQueue(getContext());
@@ -148,13 +158,13 @@ public class TramStopFragment extends Fragment {
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        Log.i("position", "onRefresh called from SwipeRefreshLayout");
-                        parent.updateView();
+                        //Log.i("position", "onRefresh called from SwipeRefreshLayout");
+                        parent.requestLocationUpdate();
                     }
                 }
         );
 
-        String name = getArguments().getString("name");
+        name = getArguments().getString("name");
         String dist = getArguments().getString("dist");
         id = getArguments().getString("id");
 
@@ -169,16 +179,67 @@ public class TramStopFragment extends Fragment {
         String hour  = String.format(Locale.US,"%02d", time.get(Calendar.HOUR_OF_DAY));
         String min   = String.format(Locale.US,"%02d", time.get(Calendar.MINUTE));
 
-        url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=120&format=json&needJourneyDetail=0&maxDeparturesPerLine=3";
+        url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=120&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
 
         updateView();
 
         return rootView;
     }
 
+    private Response.Listener<String> getJourneyRequestResponse(ListView _listView){
+        final ListView lv = _listView;
+        return new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                JSONObject jsonResponse = new JSONObject();
+                try {
+                    jsonResponse = new JSONObject(response);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.i("Json Departure Response", response);
+                }
+                JSONArray jsonArray = jsonResponse.optJSONObject("JourneyDetail").optJSONArray("Stop");
+                ArrayList<String> values = new ArrayList<>();
+                boolean startSaving = false;
+                while (jsonArray.length() > 0) {
+                    String tmpName = jsonArray.optJSONObject(0).optString("name");
+                    tmpName = tmpName.substring(0, tmpName.indexOf(','));
+                    if (startSaving) values.add(tmpName);
+                    if (tmpName.equals(name)){
+                        startSaving = true;
+                    }
+                    jsonArray.remove(0);
+                }
+                ArrayAdapter<String> la = new ArrayAdapter<>(lv.getContext(), android.R.layout.simple_list_item_1, android.R.id.text1, values);
+                lv.setAdapter(la);
+            }
+        };
+    }
 
+    ArrayList<Tram> getTramArray(String response) {
+        ArrayList<Tram> tramList = new ArrayList<>();
+        JSONObject jsonResponse = new JSONObject();
+        try {
+            jsonResponse = new JSONObject(response);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.i("Json Departure Response", response);
+        }
+        JSONArray jsonArray = jsonResponse.optJSONObject("DepartureBoard").optJSONArray("Departure");
+        if (jsonArray != null) {
+            tramList = makeTramArray(jsonArray);
+        } else {
+            jsonResponse = jsonResponse.optJSONObject("DepartureBoard").optJSONObject("Departure");
+            if (jsonResponse != null) {
+                jsonArray = new JSONArray();
+                jsonArray.put(jsonResponse.toString());
+                tramList = makeTramArray(jsonArray);
+            }
+        }
+        return tramList;
+    }
 
-    ArrayList<Tram> getTramArray(JSONArray jsonTramList) {
+    ArrayList<Tram> makeTramArray(JSONArray jsonTramList) {
 
         ArrayList<Tram> tramList = new ArrayList<>();
         ArrayList<String> checkList = new ArrayList<>();
@@ -198,7 +259,7 @@ public class TramStopFragment extends Fragment {
                     } else {
                         departureTime = (Integer.parseInt(jsonTram.getString("rtTime").substring(3)) + Integer.parseInt(jsonTram.getString("rtTime").substring(0, 2)) * 60);
                     }
-                    int waitTime = departureTime - nowTime -1;
+                    int waitTime = departureTime - nowTime;
 
                     if (waitTime <= -100) {tramData.waitTime1 = Integer.toString(60 * 24  - nowTime + departureTime);}
                     else if (waitTime >= -1) {tramData.waitTime1 = Integer.toString(waitTime);}
@@ -208,14 +269,20 @@ public class TramStopFragment extends Fragment {
                     tramData.textColor = jsonTram.getString("bgColor");
                     tramData.signColor = jsonTram.getString("fgColor");
                     tramData.waitTime2 = "-";
+                    tramData.journeyUrl = jsonTram.getJSONObject("JourneyDetailRef").getString("ref");
                     tramList.add(tramData);
                     checkList.add(jsonTram.get("sname") + "" + jsonTram.get("direction"));
                 } else {
                     Tram tramData = tramList.get(checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction")));
 
                     if (tramData.waitTime2.equals("-")) {
-                        int departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0, 2)) * 60);
-                        int waitTime = departureTime - nowTime - 1;
+                        int departureTime;
+                        if (jsonTram.isNull("rtTime")){
+                            departureTime = (Integer.parseInt(jsonTram.getString("time").substring(3)) + Integer.parseInt(jsonTram.getString("time").substring(0,2)) * 60);
+                        } else {
+                            departureTime = (Integer.parseInt(jsonTram.getString("rtTime").substring(3)) + Integer.parseInt(jsonTram.getString("rtTime").substring(0, 2)) * 60);
+                        }
+                        int waitTime = departureTime - nowTime;
 
                         if (waitTime <= -100) {
                             tramData.waitTime2 = Integer.toString(60 * 24 - nowTime + departureTime);

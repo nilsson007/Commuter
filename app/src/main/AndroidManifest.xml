@@ -21,6 +21,7 @@
         <!-- This is a standard Activity invocation for MainActivity. -->
         <activity
             android:name="com.development.android.commuter.MainActivity"
+            android:configChanges="orientation"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

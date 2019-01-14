@@ -9,7 +9,6 @@
             android:gravity="center_vertical"
             android:layout_alignParentStart="true">
         <TextView
-            android:id="@+id/tram_symbol"
             android:layout_width="wrap_content"
             android:layout_height="45sp"
             android:padding="5sp"
