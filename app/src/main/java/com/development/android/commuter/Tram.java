@@ -1,13 +1,14 @@
 package com.development.android.commuter;
 
-public class Tram {
-    public String direction;
+class Tram {
+    String direction;
     public String number;
-    public String waitTime1;
-    public String waitTime2;
-    public String signColor;
-    public String textColor;
-    public String journeyUrl;
+    String waitTime1;
+    String waitTime2;
+    String signColor;
+    String textColor;
+    String journeyUrl;
+    int height;
 
     Tram(String shortName) {
         this.number = shortName;

@@ -62,8 +62,6 @@ public class MainActivity extends FragmentActivity {
 
     Location location;
 
-    boolean orientationChange = false;
-
     FusedLocationProviderClient mFusedLocationClient;
 
     CountDownTimer locationUpdateTimer = new CountDownTimer(2000, 2000) {
@@ -105,20 +103,21 @@ public class MainActivity extends FragmentActivity {
         setContentView(R.layout.activity_main);
 
         mViewPager = findViewById(R.id.pager);
+        int oldOrientation;
         if (savedInstanceState != null) {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, savedInstanceState.getString("token"));
+            oldOrientation = savedInstanceState.getInt("orientation");
         } else {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, null);
+            oldOrientation = -1;
         }
 
         // initialize location request
         locationRequest.setFastestInterval(100);
         locationRequest.setInterval(200);
 
-        if (orientationChange) updateView();
+        if (oldOrientation != this.getResources().getConfiguration().orientation) updateView();
         else requestLocationUpdate();
-
-        int or = this.getResources().getConfiguration().orientation;
         // Init debug location
         /*
         location = new Location("PASSIVE_PROVIDER");
@@ -151,6 +150,7 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         Log.i("position","onSaveInstanceState");
+        outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putString("token", authorizationToken.getToken());
         super.onSaveInstanceState(outState);
     }
@@ -188,10 +188,6 @@ public class MainActivity extends FragmentActivity {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                     requestLocationUpdate();
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                 }
                 return;
             }
@@ -210,9 +206,8 @@ public class MainActivity extends FragmentActivity {
     private boolean requestLocationPermission() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
-            } else {
                 // No explanation needed; request the permission
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -296,7 +291,7 @@ public class MainActivity extends FragmentActivity {
             }
         }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() {
                 return authorizationToken.getTokenParams();
             }
         };
