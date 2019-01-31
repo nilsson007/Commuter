@@ -14,7 +14,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.ArrayAdapter;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -32,8 +31,8 @@ import java.util.Map;
 public class TramStopListAdapter extends ArrayAdapter<Tram> {
 
     private AuthorizationToken authorizationToken;
-
     private String name;
+    private int lastClicked = -1;
 
     TramStopListAdapter(Context context, ArrayList<Tram> trams, String stopName) {
         super(context, 0, trams);
@@ -44,7 +43,7 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, final ViewGroup parent) {
         // Get the data item for this position
         final Tram tram = getItem(position);
         // Check if an existing view is being reused, otherwise inflate the view
@@ -72,8 +71,15 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
             public void onClick(View view) {
                 ListView lv = view.findViewById(R.id.nextStopList);
                 if (lv.getMeasuredHeight() == 0) {
+                    if (lastClicked != -1){
+                        ListView lvClose = parent.getChildAt(lastClicked).findViewById(R.id.nextStopList);
+                        ViewGroup.LayoutParams params = lvClose.getLayoutParams();
+                        params.height = 0;
+                        lvClose.setLayoutParams(params);
+                    }
+                    lastClicked = position;
                     ListAdapter la = lv.getAdapter();
-                    if (lv.getAdapter() == null) {
+                    if (la == null) {
                         String journeyUrl = tram.journeyUrl;
                         StringRequest journeyRequest = new StringRequest(Request.Method.GET, journeyUrl,
                                 getJourneyRequestResponse(lv,tram), new Response.ErrorListener() {
@@ -144,8 +150,6 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
             tram.height = totalHeight + (lv.getDividerHeight() * (la.getCount() - 1));
             params.height = tram.height;
             lv.setLayoutParams(params);
-            //lv.setNestedScrollingEnabled(true);
-            //((SwipeRefreshLayout)nextTramList.getParent()).setEnabled(false);
             }
         };
     }

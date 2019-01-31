@@ -11,7 +11,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -42,6 +41,8 @@ public class TramStopFragment extends Fragment {
 
     ListView nextTramList;
 
+    TramStopListAdapter nextTramAdapter;
+
     String id;
 
     public String name;
@@ -50,19 +51,26 @@ public class TramStopFragment extends Fragment {
 
     String url;
 
+    SwipeRefreshLayout swipeRefreshLayout;
+
+    ArrayList<Tram> tramList;
+
     public TramStopFragment() {
 
         authorizationToken = AuthorizationToken.getAuthToken();
     }
 
     private void updateView() {
+        tramList = new ArrayList<>();
+        nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
+        nextTramList.setAdapter(nextTramAdapter);
         StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        ArrayList<Tram> tramList = getTramArray(response);
-                        final TramStopListAdapter nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
-                        nextTramList.setAdapter(nextTramAdapter);
+                        fillTramArray(response);
+                        nextTramAdapter.notifyDataSetChanged();
+                        swipeRefreshLayout.setRefreshing(false);
                     }
 
                 }, new Response.ErrorListener() {
@@ -115,14 +123,15 @@ public class TramStopFragment extends Fragment {
         TextView stopDist = rootView.findViewById(R.id.tram_stop_distance);
 
         // Initialize update by swipe.
-        SwipeRefreshLayout swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
+        swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
         final MainActivity parent = (MainActivity) this.getContext();
         swipeRefreshLayout.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
                         //Log.i("position", "onRefresh called from SwipeRefreshLayout");
-                        parent.requestLocationUpdate();
+                        //parent.requestLocationUpdate();
+                        updateView();
                     }
                 }
         );
@@ -149,8 +158,7 @@ public class TramStopFragment extends Fragment {
         return rootView;
     }
 
-    ArrayList<Tram> getTramArray(String response) {
-        ArrayList<Tram> tramList = new ArrayList<>();
+    void fillTramArray(String response) {
         JSONObject jsonResponse = new JSONObject();
         try {
             jsonResponse = new JSONObject(response);
@@ -160,24 +168,21 @@ public class TramStopFragment extends Fragment {
         }
         JSONArray jsonArray = jsonResponse.optJSONObject("DepartureBoard").optJSONArray("Departure");
         if (jsonArray != null) {
-            tramList = makeTramArray(jsonArray);
+            makeTramArray(jsonArray);
         } else {
             jsonResponse = jsonResponse.optJSONObject("DepartureBoard").optJSONObject("Departure");
             if (jsonResponse != null) {
                 jsonArray = new JSONArray();
                 jsonArray.put(jsonResponse.toString());
-                tramList = makeTramArray(jsonArray);
+                makeTramArray(jsonArray);
             }
         }
-        return tramList;
     }
 
-    ArrayList<Tram> makeTramArray(JSONArray jsonTramList) {
-
-        ArrayList<Tram> tramList = new ArrayList<>();
+    void makeTramArray(JSONArray jsonTramList) {
         ArrayList<String> checkList = new ArrayList<>();
         Calendar time = Calendar.getInstance();
-        int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60 + (int) Math.floor(time.get(Calendar.SECOND) / 30);
+        int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60 + time.get(Calendar.SECOND) / 30;
 
         for (int i = 0; i < jsonTramList.length(); i++) {
             try {
@@ -219,7 +224,6 @@ public class TramStopFragment extends Fragment {
             }
 
         });
-        return tramList;
     }
 
 
