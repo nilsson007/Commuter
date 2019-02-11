@@ -62,7 +62,7 @@ public class MainActivity extends FragmentActivity {
 
     FusedLocationProviderClient mFusedLocationClient;
 
-    CountDownTimer locationUpdateTimer = new CountDownTimer(2000, 2000) {
+    CountDownTimer locationUpdateTimer = new CountDownTimer(1000, 1000) {
 
         public void onTick(long millisUntilFinished) {
 
@@ -81,6 +81,7 @@ public class MainActivity extends FragmentActivity {
                 return;
             }
             for (Location _location : locationResult.getLocations()) {
+                Log.i("position", "location update");
                 if (_location.getAccuracy() < MIN_ACCURACY) {
                     location = _location;
                     locationUpdateTimer.cancel();
@@ -114,7 +115,7 @@ public class MainActivity extends FragmentActivity {
         locationRequest.setFastestInterval(100);
         locationRequest.setInterval(200);
 
-        if (oldOrientation != this.getResources().getConfiguration().orientation) updateView();
+        if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) updateView();
         else requestLocationUpdate();
         // Init debug location
         /*

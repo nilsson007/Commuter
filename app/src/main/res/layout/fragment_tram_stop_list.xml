@@ -6,18 +6,21 @@
     tools:context="com.development.android.commuter.TramStopFragment">
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:elevation="3dp"
+        android:background="#fff"
+        android:layout_height="50sp">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
+            android:textSize="25sp"
             android:layout_centerInParent="true"
             android:id="@+id/tram_stop_name"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:textSize="15sp"
+            android:layout_alignParentBottom="true"
+            android:textSize="18sp"
             android:id="@+id/tram_stop_distance"/>
     </RelativeLayout>
 
@@ -25,6 +28,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/swiperefresh"
         android:layout_width="match_parent"
+        android:elevation="0dp"
         android:layout_height="match_parent">
         <ListView
             android:id="@+id/tram_stop_list"

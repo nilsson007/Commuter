@@ -8,8 +8,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.ArrayAdapter;
@@ -32,6 +30,7 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
 
     private AuthorizationToken authorizationToken;
     private String name;
+    private View lastClickedView;
     private int lastClicked = -1;
 
     TramStopListAdapter(Context context, ArrayList<Tram> trams, String stopName) {
@@ -50,6 +49,14 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.tram_stop_list_item, parent, false);
         }
+        final ListView nextStopListView = convertView.findViewById(R.id.nextStopList);
+        if (lastClicked != position){
+            nextStopListView.setAdapter(null);
+            setViewHeight(nextStopListView, 0);
+        }else{
+            setViewHeight(nextStopListView, tram.height);
+            nextStopListView.setAdapter( new JourneyStopListAdapter(getContext(), tram.journeyStops));
+        }
         // Lookup view for data population
         TextView tramName = convertView.findViewById(R.id.tram_stop_list_item_name);
         TextView tramSign = convertView.findViewById(R.id.tram_symbol);
@@ -64,56 +71,57 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
         tramSign.setTextColor(Color.parseColor(tram.textColor));
         waitText1.setText(tram.waitTime1);
         waitText2.setText(tram.waitTime2);
+        //sendJourneyListUpdate(nextStopListView, tram);
         // Set on click listener
-        LinearLayout ll = convertView.findViewById(R.id.tram_stop_list_item_group);
-        ll.setOnClickListener(new View.OnClickListener() {
+        convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ListView lv = view.findViewById(R.id.nextStopList);
-                if (lv.getMeasuredHeight() == 0) {
+                if (tram.open == false) {
                     if (lastClicked != -1){
-                        ListView lvClose = parent.getChildAt(lastClicked).findViewById(R.id.nextStopList);
-                        ViewGroup.LayoutParams params = lvClose.getLayoutParams();
-                        params.height = 0;
-                        lvClose.setLayoutParams(params);
+                        setViewHeight(lastClickedView, 0);
+                        getItem(lastClicked).open = false;
                     }
+                    lastClickedView = nextStopListView;
                     lastClicked = position;
-                    ListAdapter la = lv.getAdapter();
-                    if (la == null) {
-                        String journeyUrl = tram.journeyUrl;
-                        StringRequest journeyRequest = new StringRequest(Request.Method.GET, journeyUrl,
-                                getJourneyRequestResponse(lv,tram), new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Log.i("Poop", error.toString());
-
-                            }
-                        }) {
-                            @Override
-                            public Map<String, String> getHeaders() {
-                                return authorizationToken.getTokenParams();
-                            }
-                        };
-                        RequestQueue queue = Volley.newRequestQueue(getContext());
-                        queue.add(journeyRequest);
+                    tram.open = true;
+                    JourneyStopListAdapter nextStopListViewAdapter = (JourneyStopListAdapter)nextStopListView.getAdapter();
+                    if (nextStopListViewAdapter == null) {
+                        sendJourneyListUpdate(nextStopListView, tram);
                     }else{
-                        ViewGroup.LayoutParams params = lv.getLayoutParams();
-                        params.height = tram.height;
-                        lv.setLayoutParams(params);
+                        setViewHeight(nextStopListView, tram.height);
                     }
                 }else{
-                    //lv.setAdapter(null);
-                    ViewGroup.LayoutParams params = lv.getLayoutParams();
-                    params.height = 0;
-                    lv.setLayoutParams(params);
+                    setViewHeight(nextStopListView,0);
+                    lastClicked = -1;
+                    tram.open = false;
                 }
             }});
         // Return the completed view to render on screen
         return convertView;
     }
+    
+    private void sendJourneyListUpdate(ListView lv, Tram tram) {
+        JourneyStopListAdapter la = new JourneyStopListAdapter(lv.getContext(), tram.journeyStops);
+        lv.setAdapter(la);
+        String journeyUrl = tram.journeyUrl;
+        StringRequest journeyRequest = new StringRequest(Request.Method.GET, journeyUrl,
+                getJourneyRequestResponseListener(lv,tram), new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i("Poop", error.toString());
 
-    private Response.Listener<String> getJourneyRequestResponse(ListView _listView, final Tram tram) {
-        final ListView lv = _listView;
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() {
+                return authorizationToken.getTokenParams();
+            }
+        };
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+        queue.add(journeyRequest);
+    }
+
+    private Response.Listener<String> getJourneyRequestResponseListener(final ListView lv, final Tram tram) {
         return new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -125,32 +133,23 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
                 Log.i("Json Departure Response", response);
             }
             JSONArray jsonArray = jsonResponse.optJSONObject("JourneyDetail").optJSONArray("Stop");
-            ArrayList<JourneyStop> stops = new ArrayList<>();
-            boolean startSaving = false;
-            while (jsonArray.length() > 0) {
-                JourneyStop stop = new JourneyStop();
-                stop.name = jsonArray.optJSONObject(0).optString("name");
-                stop.name = stop.name.substring(0, stop.name.indexOf(','));
-                if (startSaving) {
-                    stop.time = jsonArray.optJSONObject(0).optString("rtArrTime");
-                    stops.add(stop);
-                }
-                if (stop.name.equals(name)) {
-                    startSaving = true;
-                }
-                jsonArray.remove(0);
-            }
-            JourneyStopListAdapter la = new JourneyStopListAdapter(lv.getContext(), stops);
-            lv.setAdapter(la);
+            tram.makeJourneyStopList(jsonArray, name);
+            JourneyStopListAdapter la = (JourneyStopListAdapter)lv.getAdapter();
             View listItem = la.getView(0, null, lv);
             listItem.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
 
-            int totalHeight = listItem.getMeasuredHeight() * stops.size();
-            ViewGroup.LayoutParams params = lv.getLayoutParams();
+            int totalHeight = listItem.getMeasuredHeight() * tram.journeyStops.size();
             tram.height = totalHeight + (lv.getDividerHeight() * (la.getCount() - 1));
-            params.height = tram.height;
-            lv.setLayoutParams(params);
+            if(tram.open == true) {
+                setViewHeight(lv, tram.height);
+                la.notifyDataSetChanged();
+            }
             }
         };
+    }
+    void setViewHeight(View view, int height){
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        params.height = height;
+        view.setLayoutParams(params);
     }
 }

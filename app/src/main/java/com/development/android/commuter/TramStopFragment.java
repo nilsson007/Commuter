@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -60,58 +59,72 @@ public class TramStopFragment extends Fragment {
         authorizationToken = AuthorizationToken.getAuthToken();
     }
 
-    private void updateView() {
-        tramList = new ArrayList<>();
-        nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
-        nextTramList.setAdapter(nextTramAdapter);
-        StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        fillTramArray(response);
-                        nextTramAdapter.notifyDataSetChanged();
-                        swipeRefreshLayout.setRefreshing(false);
-                    }
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt("orientation", this.getResources().getConfiguration().orientation);
+        outState.putSerializable("tram list", tramList);
+        super.onSaveInstanceState(outState);
+    }
 
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                if (error.networkResponse != null) {
-                    switch (error.networkResponse.statusCode) {
-                        case 401:
+    private void updateView(boolean fetch) {
+        if (fetch) {
+            tramList = new ArrayList<>();
+            nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
+            nextTramList.setAdapter(nextTramAdapter);
+            StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            fillTramArray(response);
+                            nextTramAdapter.notifyDataSetChanged();
+                            swipeRefreshLayout.setRefreshing(false);
+                        }
+
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    if (error.networkResponse != null) {
+                        switch (error.networkResponse.statusCode) {
+                            case 401:
+                                authorizationToken.refreshToken(new UpdateChecker() {
+
+                                    @Override
+                                    public void onUpdate() {
+                                        updateView(true);
+                                    }
+                                });
+                                break;
+                            default:
+                                Log.i("NetworkResponse", Integer.toString(error.networkResponse.statusCode));
+                                break;
+                        }
+                    } else {
+                        if (authorizationToken.getToken() == null) {
                             authorizationToken.refreshToken(new UpdateChecker() {
 
                                 @Override
                                 public void onUpdate() {
-                                    updateView();
+                                    updateView(true);
                                 }
                             });
-                            break;
-                        default:
-                            Log.i("NetworkResponse", Integer.toString(error.networkResponse.statusCode));
-                            break;
+                        }
+                        Log.i("NetworkResponse", error.toString());
                     }
-                } else {
-                    if (authorizationToken.getToken() == null) {
-                        authorizationToken.refreshToken(new UpdateChecker() {
-
-                            @Override
-                            public void onUpdate() {
-                                updateView();
-                            }
-                        });
-                    }
-                    Log.i("NetworkResponse", error.toString());
                 }
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders(){
-                return authorizationToken.getTokenParams();
-            }
-        };
-        RequestQueue queue = Volley.newRequestQueue(getContext());
-        queue.add(nextTramRequest);
+            }) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    return authorizationToken.getTokenParams();
+                }
+            };
+            RequestQueue queue = Volley.newRequestQueue(getContext());
+            queue.add(nextTramRequest);
+            Log.i("position", "send request");
+        }else{
+            nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
+            nextTramList.setAdapter(nextTramAdapter);
+            nextTramAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -124,14 +137,13 @@ public class TramStopFragment extends Fragment {
 
         // Initialize update by swipe.
         swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
-        final MainActivity parent = (MainActivity) this.getContext();
         swipeRefreshLayout.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
                         //Log.i("position", "onRefresh called from SwipeRefreshLayout");
                         //parent.requestLocationUpdate();
-                        updateView();
+                        updateView(true);
                     }
                 }
         );
@@ -151,9 +163,22 @@ public class TramStopFragment extends Fragment {
         String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
         String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
 
-        url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=120&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
+        // Checks if screen was just rotated
+        int oldOrientation;
+        if (savedInstanceState != null) {
+            oldOrientation = savedInstanceState.getInt("orientation");
+            tramList = (ArrayList<Tram>) savedInstanceState.getSerializable("tram list");
+        } else {
+            oldOrientation = -1;
+        }
 
-        updateView();
+        if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) {
+            updateView(false);
+        }
+        else {
+            url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=2";
+            updateView(true);
+        }
 
         return rootView;
     }

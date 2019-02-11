@@ -5,10 +5,11 @@
     android:id="@+id/tram_stop_list_item_group"
     android:orientation="vertical">
     <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:elevation="20dp"
-            android:gravity="center_vertical">
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:elevation="3dp"
+        android:background="#FFF"
+        android:gravity="center_vertical">
         <TextView
             android:id="@+id/tram_symbol"
             android:layout_width="wrap_content"
@@ -16,17 +17,16 @@
             android:padding="5sp"
             android:textSize="20sp"
             android:gravity="center"
+            android:elevation="6dp"
             android:layout_margin="5sp"
             android:minWidth="45sp"
             android:background="@drawable/tram_number_bg"/>
-
         <TextView
             android:id="@+id/tram_stop_list_item_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="20sp" />
-
         <TextView
             android:id="@+id/tram_wait1"
             android:layout_width="40sp"
@@ -43,5 +43,6 @@
     <ListView
         android:id="@+id/nextStopList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:divider="@null"/>
 </LinearLayout>
