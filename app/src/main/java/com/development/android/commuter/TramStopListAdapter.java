@@ -125,25 +125,25 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
         return new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-            JSONObject jsonResponse = new JSONObject();
-            try {
-                jsonResponse = new JSONObject(response);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Log.i("Json Departure Response", response);
-            }
-            JSONArray jsonArray = jsonResponse.optJSONObject("JourneyDetail").optJSONArray("Stop");
-            tram.makeJourneyStopList(jsonArray, name);
-            JourneyStopListAdapter la = (JourneyStopListAdapter)lv.getAdapter();
-            View listItem = la.getView(0, null, lv);
-            listItem.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                JSONObject jsonResponse = new JSONObject();
+                try {
+                    jsonResponse = new JSONObject(response);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.i("Json Departure Response", response);
+                }
+                JSONArray jsonArray = jsonResponse.optJSONObject("JourneyDetail").optJSONArray("Stop");
+                tram.makeJourneyStopList(jsonArray, name);
+                JourneyStopListAdapter la = (JourneyStopListAdapter)lv.getAdapter();
+                View listItem = la.getView(0, null, lv);
+                listItem.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
 
-            int totalHeight = listItem.getMeasuredHeight() * tram.journeyStops.size();
-            tram.height = totalHeight + (lv.getDividerHeight() * (la.getCount() - 1));
-            if(tram.open == true) {
-                setViewHeight(lv, tram.height);
-                la.notifyDataSetChanged();
-            }
+                int totalHeight = listItem.getMeasuredHeight() * tram.journeyStops.size();
+                tram.height = totalHeight + (lv.getDividerHeight() * (la.getCount() - 1));
+                if(tram.open == true) {
+                    setViewHeight(lv, tram.height);
+                    la.notifyDataSetChanged();
+                }
             }
         };
     }
