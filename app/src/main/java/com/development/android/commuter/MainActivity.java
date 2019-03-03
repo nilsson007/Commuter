@@ -46,7 +46,11 @@ public class MainActivity extends FragmentActivity {
 
     static final byte MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 67;
 
-    static final int MIN_ACCURACY = 100;
+    static final int MIN_ACCURACY = 150;
+
+    static final int MIN_LOCATION_UPDATES = 1;
+
+    static final int MAX_LOCATION_UPDATE_TIME = 5000;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -62,7 +66,11 @@ public class MainActivity extends FragmentActivity {
 
     FusedLocationProviderClient mFusedLocationClient;
 
-    CountDownTimer locationUpdateTimer = new CountDownTimer(1000, 1000) {
+    ArrayList<Map<String, String>> stopsList;
+
+    int locationUpdatesCountDown = MIN_LOCATION_UPDATES;
+
+    CountDownTimer locationUpdateTimer = new CountDownTimer(MAX_LOCATION_UPDATE_TIME, MAX_LOCATION_UPDATE_TIME) {
 
         public void onTick(long millisUntilFinished) {
 
@@ -70,23 +78,24 @@ public class MainActivity extends FragmentActivity {
 
         public void onFinish() {
             mFusedLocationClient.removeLocationUpdates(locationCallback);
-            updateView();
+            updateView(true);
         }
     };
 
     LocationCallback locationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
+            Log.i("position", "location update");
             if (locationResult == null) {
                 return;
             }
             for (Location _location : locationResult.getLocations()) {
-                Log.i("position", "location update");
-                if (_location.getAccuracy() < MIN_ACCURACY) {
+                if ((_location.getAccuracy() < MIN_ACCURACY) && (--locationUpdatesCountDown <= 0 )) {
                     location = _location;
                     locationUpdateTimer.cancel();
-                    updateView();
+                    updateView(true);
                     mFusedLocationClient.removeLocationUpdates(locationCallback);
+                    locationUpdatesCountDown = MIN_LOCATION_UPDATES;
                 }
             }
         }
@@ -106,6 +115,7 @@ public class MainActivity extends FragmentActivity {
         if (savedInstanceState != null) {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, savedInstanceState.getString("token"));
             oldOrientation = savedInstanceState.getInt("orientation");
+            stopsList = (ArrayList<Map<String, String>>)savedInstanceState.getSerializable("stopList");
         } else {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, null);
             oldOrientation = -1;
@@ -114,8 +124,10 @@ public class MainActivity extends FragmentActivity {
         // initialize location request
         locationRequest.setFastestInterval(100);
         locationRequest.setInterval(200);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) updateView();
+        if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1)
+            updateView(false);
         else requestLocationUpdate();
         // Init debug location
         /*
@@ -137,13 +149,15 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mFusedLocationClient.removeLocationUpdates(locationCallback);
+        if (mFusedLocationClient != null)
+            mFusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mFusedLocationClient.removeLocationUpdates(locationCallback);
+        if (mFusedLocationClient != null)
+            mFusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     @Override
@@ -151,27 +165,33 @@ public class MainActivity extends FragmentActivity {
         Log.i("position","onSaveInstanceState");
         outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putString("token", authorizationToken.getToken());
+        outState.putSerializable("stopList", stopsList);
         super.onSaveInstanceState(outState);
     }
 
-    private void updateView() {
+    private void updateView(boolean fetch) {
         Log.i("position","updateView");
-        if (requestLocationPermission()) {
-            mFusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location _location) {
-                            // Got last known location. In some rare situations this can be null.
-                            if (_location != null) {
+        if (fetch) {
+            if (requestLocationPermission()) {
+                mFusedLocationClient.getLastLocation()
+                        .addOnSuccessListener(new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location _location) {
+                                // Got last known location. In some rare situations this can be null.
+                                if (_location != null) {
 
-                                location = _location;
+                                    location = _location;
 
-                                String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=200&format=json";
+                                    String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=200&format=json";
 
-                                sendRequest(url);
+                                    sendRequest(url);
+                                }
                             }
-                        }
-                    });
+                        });
+            }
+        }else{
+            tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), stopsList);
+            mViewPager.setAdapter(tramStopPagerAdapter);
         }
     }
 
@@ -226,7 +246,7 @@ public class MainActivity extends FragmentActivity {
                     @Override
                     public void onResponse(String response) {
                         JSONObject jsonResponse;
-                        ArrayList<Map<String, String>> stopsList = new ArrayList<>();
+                        stopsList = new ArrayList<>();
                         try {
                             jsonResponse = new JSONObject(response);
                             jsonResponse = (JSONObject) jsonResponse.get("LocationList");

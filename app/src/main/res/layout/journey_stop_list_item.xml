@@ -8,15 +8,17 @@
     android:background="@color/colorPrimaryDark"
     android:gravity="center_vertical">
     <ImageView
+        android:layout_centerInParent="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/journey_stop_dot"
-        android:contentDescription="TODO" />
+        android:contentDescription="@null"
+        android:id="@+id/journey_stop_dot"/>
     <TextView
         android:id="@+id/journey_stop_name"
         android:layout_width="0dp"
-        android:layout_margin="10sp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10sp"
         android:layout_weight="1"
         android:textSize="20sp" />
     <TextView

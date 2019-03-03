@@ -22,6 +22,9 @@ public class JourneyStopListAdapter extends ArrayAdapter<JourneyStop> {
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.journey_stop_list_item, parent, false);
         }
+        if (position == (getCount() - 1)){
+            convertView.findViewById(R.id.journey_stop_dot).setBackgroundResource(R.drawable.journey_stop_last_dot);
+        }
         // Lookup view for data population
         TextView stopName = convertView.findViewById(R.id.journey_stop_name);
         TextView stopTime = convertView.findViewById(R.id.journey_stop_time);

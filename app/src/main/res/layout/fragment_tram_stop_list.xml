@@ -6,7 +6,7 @@
     tools:context="com.development.android.commuter.TramStopFragment">
     <RelativeLayout
         android:layout_width="match_parent"
-        android:elevation="3dp"
+        android:elevation="10dp"
         android:background="@color/colorPrimary"
         android:layout_height="50sp">
         <TextView
@@ -29,9 +29,11 @@
         android:id="@+id/swiperefresh"
         android:layout_width="match_parent"
         android:elevation="0dp"
+        android:background="@color/colorPrimary"
         android:layout_height="match_parent">
         <ListView
             android:id="@+id/tram_stop_list"
+            android:divider="@null"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </android.support.v4.widget.SwipeRefreshLayout>

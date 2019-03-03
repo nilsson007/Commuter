@@ -12,10 +12,21 @@
         </shape>
     </item>
     <item
-        android:gravity="center">
+        android:gravity="center"
+        android:height="40sp">
         <shape
             android:shape="rectangle">
             <size android:height="40sp"
+                android:width="3dp"/>
+            <solid
+                android:color="#00000000"/>
+        </shape>
+    </item>
+    <item
+        android:gravity="center|top">
+        <shape
+            android:shape="rectangle">
+            <size android:height="20sp"
                 android:width="3dp"/>
             <solid
                 android:color="@color/colorPrimary"/>
@@ -30,7 +41,7 @@
                 android:width="7dp"
                 android:height="7dp" />
             <solid
-                android:color="@color/colorPrimaryDark"/>
+                android:color="#cc0"/>
         </shape>
     </item>
 </layer-list>

@@ -176,7 +176,7 @@ public class TramStopFragment extends Fragment {
             updateView(false);
         }
         else {
-            url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=2";
+            url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
             updateView(true);
         }
 
@@ -215,8 +215,10 @@ public class TramStopFragment extends Fragment {
                 int index = checkList.indexOf(jsonTram.get("sname") + "" + jsonTram.get("direction"));
                 if (index == -1) {
                     Tram tramData = new Tram(jsonTram.getString("sname"));
-                    tramData.waitTime1 = getTramWaitTime(jsonTram,nowTime);
+                    tramData.waitTime1 = TimeDiffString.getTramWaitTime(jsonTram,nowTime);
                     if (tramData.waitTime1 != null) {
+                        tramData.nowTime = TimeDiffString.getTramNowTimeInt(jsonTram);
+                        tramData.waitTime1 = tramData.waitTime1.equals("0") ? "Nu" : tramData.waitTime1;
                         tramData.direction = jsonTram.getString("direction");
                         tramData.textColor = jsonTram.getString("bgColor");
                         tramData.signColor = jsonTram.getString("fgColor");
@@ -229,7 +231,7 @@ public class TramStopFragment extends Fragment {
                     Tram tramData = tramList.get(index);
 
                     if (tramData.waitTime2.equals("-")) {
-                        tramData.waitTime2 = getTramWaitTime(jsonTram,nowTime);
+                        tramData.waitTime2 = TimeDiffString.getTramWaitTime(jsonTram,nowTime);
                     }
                 }
             } catch (JSONException e) {
@@ -249,29 +251,5 @@ public class TramStopFragment extends Fragment {
             }
 
         });
-    }
-
-
-    String getTramWaitTime(JSONObject jsonTram, int nowTime) {
-        int departureTime;
-        String s_waitTime;
-        if (jsonTram.isNull("rtTime")) {
-            departureTime = (Integer.parseInt(jsonTram.optString("time").substring(3)) + Integer.parseInt(jsonTram.optString("time").substring(0, 2)) * 60);
-        } else {
-            departureTime = (Integer.parseInt(jsonTram.optString("rtTime").substring(3)) + Integer.parseInt(jsonTram.optString("rtTime").substring(0, 2)) * 60);
-        }
-        int waitTime = departureTime - nowTime;
-
-        if (waitTime <= -100) {
-            s_waitTime = Integer.toString(60 * 24 - nowTime + departureTime);
-        } else if (waitTime >= -1) {
-            s_waitTime = Integer.toString(waitTime);
-        } else {
-            return null;
-        }
-        if ((waitTime) == 0) {
-            return "Nu";
-        }
-        return s_waitTime;
     }
 }
