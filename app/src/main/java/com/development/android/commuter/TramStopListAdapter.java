@@ -56,7 +56,7 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.tram_stop_list_item, parent, false);
         }
         final ListView nextStopListView = convertView.findViewById(R.id.nextStopList);
-        if (tram.open == false){
+        if (!tram.open){
             setViewHeight(nextStopListView, 0);
         }else{
             nextStopListView.setAdapter(new JourneyStopListAdapter(getContext(),tram.journeyStops));
@@ -112,7 +112,6 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
                     );
                     nextStopListView.startAnimation(resizeAnimation);
                 }else{
-                    nextStopListView.setAdapter(null);
                     ResizeAnimation resizeAnimation = new ResizeAnimation(
                             nextStopListView,
                             0,

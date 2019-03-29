@@ -46,7 +46,7 @@ public class MainActivity extends FragmentActivity {
 
     static final byte MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 67;
 
-    static final int MIN_ACCURACY = 150;
+    //static final int MIN_ACCURACY = 150;
 
     static final int MIN_LOCATION_UPDATES = 1;
 
@@ -90,13 +90,13 @@ public class MainActivity extends FragmentActivity {
                 return;
             }
             for (Location _location : locationResult.getLocations()) {
-                if ((_location.getAccuracy() < MIN_ACCURACY) && (--locationUpdatesCountDown <= 0 )) {
+                //if ((_location.getAccuracy() < MIN_ACCURACY) && (--locationUpdatesCountDown <= 0 )) {
                     location = _location;
                     locationUpdateTimer.cancel();
                     updateView(true);
                     mFusedLocationClient.removeLocationUpdates(locationCallback);
                     locationUpdatesCountDown = MIN_LOCATION_UPDATES;
-                }
+                //}
             }
         }
     };
@@ -172,22 +172,9 @@ public class MainActivity extends FragmentActivity {
     private void updateView(boolean fetch) {
         Log.i("position","updateView");
         if (fetch) {
-            if (requestLocationPermission()) {
-                mFusedLocationClient.getLastLocation()
-                        .addOnSuccessListener(new OnSuccessListener<Location>() {
-                            @Override
-                            public void onSuccess(Location _location) {
-                                // Got last known location. In some rare situations this can be null.
-                                if (_location != null) {
-
-                                    location = _location;
-
-                                    String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=200&format=json";
-
-                                    sendRequest(url);
-                                }
-                            }
-                        });
+            if (location != null) {
+                String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=200&format=json";
+                sendRequest(url);
             }
         }else{
             tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), stopsList);
@@ -208,7 +195,6 @@ public class MainActivity extends FragmentActivity {
                     // contacts-related task you need to do.
                     requestLocationUpdate();
                 }
-                return;
             }
         }
     }
