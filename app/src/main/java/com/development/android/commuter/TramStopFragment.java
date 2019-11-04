@@ -1,7 +1,7 @@
 package com.development.android.commuter;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -53,6 +53,8 @@ public class TramStopFragment extends Fragment {
     SwipeRefreshLayout swipeRefreshLayout;
 
     ArrayList<Tram> tramList;
+
+    View rootView;
 
     public TramStopFragment() {
 
@@ -130,38 +132,41 @@ public class TramStopFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_tram_stop_list, container, false);
+        rootView = inflater.inflate(R.layout.fragment_tram_stop_list, container, false);
         nextTramList = rootView.findViewById(R.id.tram_stop_list);
         TextView stopName = rootView.findViewById(R.id.tram_stop_name);
         TextView stopDist = rootView.findViewById(R.id.tram_stop_distance);
-
-        // Initialize update by swipe.
-        swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
-        swipeRefreshLayout.setOnRefreshListener(
-                new SwipeRefreshLayout.OnRefreshListener() {
-                    @Override
-                    public void onRefresh() {
-                        //Log.i("position", "onRefresh called from SwipeRefreshLayout");
-                        //parent.requestLocationUpdate();
-                        updateView(true);
-                    }
-                }
-        );
+        TextView stopTime = rootView.findViewById(R.id.tram_stop_time);
 
         name = getArguments().getString("name");
         String dist = getArguments().getString("dist");
         id = getArguments().getString("id");
 
+        swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
+
+        Calendar time = (Calendar) getArguments().getSerializable("time");
+
+        if(!getArguments().getBoolean("poopUp")) {
+            swipeRefreshLayout.setOnRefreshListener(
+                    new SwipeRefreshLayout.OnRefreshListener() {
+                        @Override
+                        public void onRefresh() {
+                            url = makeUrl(Calendar.getInstance());
+                            updateView(true);
+                        }
+                    }
+            );
+        }
+        else
+        {
+            swipeRefreshLayout.setEnabled(false);
+            String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
+            String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
+            stopTime.setText(hour + ":" + min);
+        }
+
         stopName.setText(name);
         stopDist.setText(dist);
-
-        Calendar time = Calendar.getInstance();
-
-        String year = String.format(Locale.US, "%04d", time.get(Calendar.YEAR));
-        String month = String.format(Locale.US, "%02d", time.get(Calendar.MONTH) + 1);
-        String day = String.format(Locale.US, "%02d", time.get(Calendar.DAY_OF_MONTH));
-        String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
-        String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
 
         // Checks if screen was just rotated
         int oldOrientation;
@@ -176,11 +181,17 @@ public class TramStopFragment extends Fragment {
             updateView(false);
         }
         else {
-            url = baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
+            url = makeUrl(time);
             updateView(true);
         }
 
         return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        ((View)rootView.getParent()).setElevation(0);
+        super.onDestroyView();
     }
 
     void fillTramArray(String response) {
@@ -251,5 +262,15 @@ public class TramStopFragment extends Fragment {
             }
 
         });
+    }
+    String makeUrl(Calendar time){
+        String year = String.format(Locale.US, "%04d", time.get(Calendar.YEAR));
+        String month = String.format(Locale.US, "%02d", time.get(Calendar.MONTH) + 1);
+        String day = String.format(Locale.US, "%02d", time.get(Calendar.DAY_OF_MONTH));
+        String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
+        String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
+
+        return baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
+
     }
 }

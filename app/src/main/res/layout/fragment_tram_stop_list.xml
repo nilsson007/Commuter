@@ -16,6 +16,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="5dp"
+                android:id="@+id/tram_stop_time"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:textSize="25sp"
                 android:layout_centerInParent="true"
                 android:id="@+id/tram_stop_name"/>
@@ -41,16 +49,4 @@
                 android:layout_height="match_parent"/>
         </android.support.v4.widget.SwipeRefreshLayout>
     </LinearLayout>
-    <FrameLayout android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/on_journey_fragment"
-        android:layout_margin="20dp"
-        android:layout_centerInParent="true"
-        android:elevation="3dp"
-        android:background="#5000">
-        <!--<fragment class="com.development.android.commuter.TramStopFragment"
-            android:id="@+id/poopUpFragment"
-            android:layout_width="10dp"
-            android:layout_height="10dp" />-->
-    </FrameLayout>
 </RelativeLayout>

@@ -6,7 +6,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import android.app.Activity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 
@@ -21,7 +21,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends Activity {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -140,7 +139,7 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), new ArrayList<Map<String, String>>());
+        tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), new ArrayList<Map<String, String>>());
         mViewPager.setAdapter(tramStopPagerAdapter);
         requestLocationUpdate();
         Log.i("position","onRestart");
@@ -177,7 +176,7 @@ public class MainActivity extends FragmentActivity {
                 sendRequest(url);
             }
         }else{
-            tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), stopsList);
+            tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
             mViewPager.setAdapter(tramStopPagerAdapter);
         }
     }
@@ -259,7 +258,7 @@ public class MainActivity extends FragmentActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        tramStopPagerAdapter = new TramStopPagerAdapter(getSupportFragmentManager(), stopsList);
+                        tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
                         mViewPager.setAdapter(tramStopPagerAdapter);
                     }
 
