@@ -2,13 +2,19 @@ package com.development.android.commuter;
 
 import android.os.Bundle;
 import android.app.Fragment;
+import android.app.FragmentTransaction;
+import android.app.FragmentManager;
+import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.ImageButton;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -48,32 +54,42 @@ public class TramStopFragment extends Fragment {
 
     static String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=";
 
-    String url;
-
     SwipeRefreshLayout swipeRefreshLayout;
 
     ArrayList<Tram> tramList;
 
     View rootView;
 
+    Calendar time;
+
+    TramStopFragment childFragment;
+
+    int position;
+
+    final private Fragment thisFragment;
+
     public TramStopFragment() {
 
         authorizationToken = AuthorizationToken.getAuthToken();
+        thisFragment = this;
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putSerializable("tram list", tramList);
+        if(childFragment != null){
+            getChildFragmentManager().putFragment(outState, "child" + position, childFragment);
+        }
         super.onSaveInstanceState(outState);
     }
 
     private void updateView(boolean fetch) {
         if (fetch) {
             tramList = new ArrayList<>();
-            nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
+            nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name, this);
             nextTramList.setAdapter(nextTramAdapter);
-            StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
+            StringRequest nextTramRequest = new StringRequest(Request.Method.GET, makeUrl(),
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -123,10 +139,17 @@ public class TramStopFragment extends Fragment {
             queue.add(nextTramRequest);
             Log.i("position", "send request");
         }else{
-            nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name);
+            nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name, this);
             nextTramList.setAdapter(nextTramAdapter);
             nextTramAdapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i("commuter", "onDestroy");
+
     }
 
     @Override
@@ -141,17 +164,18 @@ public class TramStopFragment extends Fragment {
         name = getArguments().getString("name");
         String dist = getArguments().getString("dist");
         id = getArguments().getString("id");
+        position = getArguments().getInt("position");
 
         swipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
 
-        Calendar time = (Calendar) getArguments().getSerializable("time");
+        time = (Calendar) getArguments().getSerializable("time");
 
         if(!getArguments().getBoolean("poopUp")) {
             swipeRefreshLayout.setOnRefreshListener(
                     new SwipeRefreshLayout.OnRefreshListener() {
                         @Override
                         public void onRefresh() {
-                            url = makeUrl(Calendar.getInstance());
+                            time = Calendar.getInstance();
                             updateView(true);
                         }
                     }
@@ -163,6 +187,14 @@ public class TramStopFragment extends Fragment {
             String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
             String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
             stopTime.setText(hour + ":" + min);
+            ImageButton close = rootView.findViewById(R.id.tram_stop_close);
+            close.setVisibility(View.VISIBLE);
+            close.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ((TramStopFragment)thisFragment.getParentFragment()).closePoopUpFragment();
+                }
+            });
         }
 
         stopName.setText(name);
@@ -170,28 +202,26 @@ public class TramStopFragment extends Fragment {
 
         // Checks if screen was just rotated
         int oldOrientation;
+        Fragment fragment = null;
         if (savedInstanceState != null) {
             oldOrientation = savedInstanceState.getInt("orientation");
             tramList = (ArrayList<Tram>) savedInstanceState.getSerializable("tram list");
+            fragment = getChildFragmentManager().getFragment(savedInstanceState, "child" + position);
         } else {
             oldOrientation = -1;
         }
 
         if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) {
             updateView(false);
+            if (fragment != null){
+                setChildFragment((TramStopFragment) fragment,-1,-1);
+            }
         }
         else {
-            url = makeUrl(time);
             updateView(true);
         }
 
         return rootView;
-    }
-
-    @Override
-    public void onDestroyView() {
-        ((View)rootView.getParent()).setElevation(0);
-        super.onDestroyView();
     }
 
     void fillTramArray(String response) {
@@ -217,7 +247,6 @@ public class TramStopFragment extends Fragment {
 
     void makeTramArray(JSONArray jsonTramList) {
         ArrayList<String> checkList = new ArrayList<>();
-        Calendar time = Calendar.getInstance();
         int nowTime = time.get(Calendar.MINUTE) + time.get(Calendar.HOUR_OF_DAY) * 60 + time.get(Calendar.SECOND) / 30;
 
         for (int i = 0; i < jsonTramList.length(); i++) {
@@ -263,7 +292,7 @@ public class TramStopFragment extends Fragment {
 
         });
     }
-    String makeUrl(Calendar time){
+    String makeUrl(){
         String year = String.format(Locale.US, "%04d", time.get(Calendar.YEAR));
         String month = String.format(Locale.US, "%02d", time.get(Calendar.MONTH) + 1);
         String day = String.format(Locale.US, "%02d", time.get(Calendar.DAY_OF_MONTH));
@@ -272,5 +301,47 @@ public class TramStopFragment extends Fragment {
 
         return baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
 
+    }
+    void setChildFragment(TramStopFragment fragment, double x, double y){
+        childFragment = fragment;
+        MyFrameLayout frame = new MyFrameLayout(getContext(),x,y){
+            @Override
+            public void onAnimationEnd(){
+                super.onAnimationEnd();
+                if (this.closing) {
+                    FragmentManager fm = thisFragment.getChildFragmentManager();
+                    fm.beginTransaction().remove(childFragment).commit();
+                    childFragment = null;
+                    this.closing = false;
+                }
+            }
+        };
+        RelativeLayout.LayoutParams layout = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT);
+        layout.addRule(RelativeLayout.CENTER_IN_PARENT,RelativeLayout.TRUE);
+        layout.setMargins(dpToPx(10),dpToPx(10),dpToPx(10),dpToPx(10));
+        frame.setLayoutParams(layout);
+        frame.setBackgroundColor(getContext().getColor(R.color.colorPrimaryDark));
+        frame.setElevation(dpToPx(10));
+        ((RelativeLayout)rootView).addView(frame);
+        FragmentTransaction transaction = thisFragment.getChildFragmentManager().beginTransaction();
+        if (fragment.getId() == 0) {
+            frame.setId(View.generateViewId());
+            transaction.add(frame.getId(), fragment);
+        }else {
+            frame.setId(fragment.getId());
+            transaction.replace(frame.getId(), fragment);
+        }
+        transaction.commit();
+    }
+    private int dpToPx(int dp) {
+        float density = getContext().getResources().getDisplayMetrics().density;
+        return Math.round((float) dp * density);
+    }
+    void closePoopUpFragment(){
+        try {
+            ((MyFrameLayout) childFragment.getView().getParent()).closeViewAnimation();
+        } catch(Exception e) {}
     }
 }

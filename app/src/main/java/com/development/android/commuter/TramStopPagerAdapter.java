@@ -50,6 +50,7 @@ public class TramStopPagerAdapter extends PagerAdapter {
         args.putString("name", tramStops.get(position).get("name"));
         args.putString("dist", tramStops.get(position).get("dist") + "m");
         args.putString("id", tramStops.get(position).get("id"));
+        args.putInt("position", position);
         args.putSerializable("time", Calendar.getInstance());
         args.putBoolean("poopUp",false);
         fragment.setArguments(args);

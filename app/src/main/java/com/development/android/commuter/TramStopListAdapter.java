@@ -31,9 +31,12 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
     private AuthorizationToken authorizationToken;
     private String name;
     private int lastClicked = -1;
+    private TramStopFragment parentFragment;
 
-    TramStopListAdapter(Context context, ArrayList<Tram> trams, String stopName) {
+    TramStopListAdapter(Context context, ArrayList<Tram> trams, String stopName, TramStopFragment pf) {
         super(context, 0, trams);
+
+        parentFragment = pf;
 
         authorizationToken = AuthorizationToken.getAuthToken();
 
@@ -56,10 +59,11 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.tram_stop_list_item, parent, false);
         }
         final ListView nextStopListView = convertView.findViewById(R.id.nextStopList);
+        tram.setListView(nextStopListView);
         if (!tram.open){
             setViewHeight(nextStopListView, 0);
         }else{
-            nextStopListView.setAdapter(new JourneyStopListAdapter(getContext(),tram.journeyStops));
+            nextStopListView.setAdapter(new JourneyStopListAdapter(getContext(), tram.journeyStops, parentFragment));
             setViewHeight(nextStopListView, tram.height);
         }
         // Lookup view for data population
@@ -80,7 +84,7 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
             sendJourneyListUpdate(nextStopListView, tram);
         }
         else {
-            JourneyStopListAdapter journeyStopListAdapter = new JourneyStopListAdapter(getContext(), tram.journeyStops);
+            JourneyStopListAdapter journeyStopListAdapter = new JourneyStopListAdapter(getContext(), tram.journeyStops, parentFragment);
             nextStopListView.setAdapter(journeyStopListAdapter);
         }
         // Set on click listener
@@ -91,33 +95,17 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
                     if (lastClicked != -1){
                         View lastClickedView = getViewByPosition(lastClicked, (ListView)parent);
                         if (lastClickedView != null) {
-                            ListView lastClickedListView = lastClickedView.findViewById(R.id.nextStopList);
-                            ResizeAnimation resizeAnimation = new ResizeAnimation(
-                                    lastClickedListView,
-                                    0,
-                                    getItem(lastClicked).height
-                            );
-                            lastClickedListView.startAnimation(resizeAnimation);
+                            getItem(lastClicked).collapseList();
                         }
                         getItem(lastClicked).open = false;
                     }
                     lastClicked = position;
                     tram.open = true;
-                    JourneyStopListAdapter nextStopListViewAdapter = new JourneyStopListAdapter(getContext(),tram.journeyStops);
+                    JourneyStopListAdapter nextStopListViewAdapter = new JourneyStopListAdapter(getContext(),tram.journeyStops, parentFragment);
                     nextStopListView.setAdapter(nextStopListViewAdapter);
-                    ResizeAnimation resizeAnimation = new ResizeAnimation(
-                            nextStopListView,
-                            tram.height,
-                            0
-                    );
-                    nextStopListView.startAnimation(resizeAnimation);
+                    tram.expandList();
                 }else{
-                    ResizeAnimation resizeAnimation = new ResizeAnimation(
-                            nextStopListView,
-                            0,
-                            tram.height
-                    );
-                    nextStopListView.startAnimation(resizeAnimation);
+                    tram.collapseList();
                     lastClicked = -1;
                     tram.open = false;
                 }
@@ -127,8 +115,6 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
     }
     
     private void sendJourneyListUpdate(ListView lv, Tram tram) {
-        //JourneyStopListAdapter la = new JourneyStopListAdapter(lv.getContext(), tram.journeyStops);
-        //lv.setAdapter(la);
         String journeyUrl = tram.journeyUrl;
         StringRequest journeyRequest = new StringRequest(Request.Method.GET, journeyUrl,
                 getJourneyRequestResponseListener(lv,tram), new Response.ErrorListener() {
@@ -161,19 +147,13 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
                 }
                 if (jsonArray != null) {
                     tram.makeJourneyStopList(jsonArray, name);
-                    View listItem = LayoutInflater.from(getContext()).inflate(R.layout.journey_stop_list_item, lv, false);
-                    listItem.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-                    tram.height = (listItem.getMeasuredHeight() + lv.getDividerHeight()) * tram.journeyStops.size();
-                    if (tram.open) {
-                        setViewHeight(lv, tram.height);
-                    }
                 }else{
                     sendJourneyListUpdate(lv, tram);
                 }
             }
         };
     }
-    private void setViewHeight(ListView view, int height){
+    static void setViewHeight(ListView view, int height){
         ViewGroup.LayoutParams params = view.getLayoutParams();
         params.height = height;
         view.setLayoutParams(params);

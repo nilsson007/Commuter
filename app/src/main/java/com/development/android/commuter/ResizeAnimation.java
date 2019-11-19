@@ -2,7 +2,6 @@ package com.development.android.commuter;
 
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 public class ResizeAnimation extends Animation {
