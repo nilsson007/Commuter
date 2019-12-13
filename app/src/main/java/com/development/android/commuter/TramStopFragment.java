@@ -1,16 +1,16 @@
 package com.development.android.commuter;
 
+import android.graphics.PorterDuff;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.FragmentManager;
-import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -42,29 +42,33 @@ public class TramStopFragment extends Fragment {
      * The fragment argument representing the section number for this
      * fragment.
      */
-    AuthorizationToken authorizationToken;
+    private AuthorizationToken authorizationToken;
 
-    ListView nextTramList;
+    private ListView nextTramList;
 
-    TramStopListAdapter nextTramAdapter;
+    private TramStopListAdapter nextTramAdapter;
 
-    String id;
+    private String id;
 
     public String name;
 
-    static String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=";
+    private static String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=";
 
-    SwipeRefreshLayout swipeRefreshLayout;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
-    ArrayList<Tram> tramList;
+    private ArrayList<Tram> tramList;
 
-    View rootView;
+    private View rootView;
 
-    Calendar time;
+    private Calendar time;
 
-    TramStopFragment childFragment;
+    private TramStopFragment childFragment;
 
-    int position;
+    private int position;
+
+    private double poopUpClickX;
+
+    private double poopUpClickY;
 
     final private Fragment thisFragment;
 
@@ -78,6 +82,8 @@ public class TramStopFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putSerializable("tram list", tramList);
+        outState.putDouble("poopUpClickX", poopUpClickX);
+        outState.putDouble("poopUpClickY", poopUpClickY);
         if(childFragment != null){
             getChildFragmentManager().putFragment(outState, "child" + position, childFragment);
         }
@@ -187,12 +193,14 @@ public class TramStopFragment extends Fragment {
             String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
             String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
             stopTime.setText(hour + ":" + min);
-            ImageButton close = rootView.findViewById(R.id.tram_stop_close);
+
+            final ImageButton close = rootView.findViewById(R.id.tram_stop_close);
             close.setVisibility(View.VISIBLE);
             close.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ((TramStopFragment)thisFragment.getParentFragment()).closePoopUpFragment();
+                    close.setEnabled(false);
                 }
             });
         }
@@ -213,8 +221,10 @@ public class TramStopFragment extends Fragment {
 
         if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) {
             updateView(false);
+            poopUpClickX = savedInstanceState.getDouble("poopUpClickX");
+            poopUpClickY = savedInstanceState.getDouble("poopUpClickY");
             if (fragment != null){
-                setChildFragment((TramStopFragment) fragment,-1,-1);
+                setChildFragment((TramStopFragment) fragment,poopUpClickX,poopUpClickY);
             }
         }
         else {
@@ -304,6 +314,8 @@ public class TramStopFragment extends Fragment {
     }
     void setChildFragment(TramStopFragment fragment, double x, double y){
         childFragment = fragment;
+        poopUpClickX = x;
+        poopUpClickY = y;
         MyFrameLayout frame = new MyFrameLayout(getContext(),x,y){
             @Override
             public void onAnimationEnd(){

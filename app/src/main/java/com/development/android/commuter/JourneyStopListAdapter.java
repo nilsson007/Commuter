@@ -1,6 +1,7 @@
 package com.development.android.commuter;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -46,10 +47,8 @@ public class JourneyStopListAdapter extends ArrayAdapter<JourneyStop> {
 
                 // save the X,Y coordinates
                 if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-                    int[] coor = new int[2];
-                    v.getLocationOnScreen(coor);
-                    lastTouchDownX = event.getX() + coor[0];
-                    lastTouchDownY = event.getY() + coor[1];
+                    lastTouchDownX = event.getX()/Resources.getSystem().getDisplayMetrics().widthPixels;
+                    lastTouchDownY = event.getRawY()-getStatusBarHeight();
                 }
 
                 // let the touch event pass on to whoever needs it
@@ -72,5 +71,14 @@ public class JourneyStopListAdapter extends ArrayAdapter<JourneyStop> {
             }
         });
         return convertView;
+    }
+
+    private int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = Resources.getSystem().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = Resources.getSystem().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 }

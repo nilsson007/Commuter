@@ -2,13 +2,20 @@ package com.development.android.commuter;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.app.Activity;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -25,6 +32,7 @@ import com.google.android.gms.location.LocationResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +65,8 @@ public class MainActivity extends Activity {
     FusedLocationProviderClient mFusedLocationClient;
 
     ArrayList<Map<String, String>> stopsList;
+
+    ImageButton mUpdateButton;
 
     int locationUpdatesCountDown = MIN_LOCATION_UPDATES;
 
@@ -99,6 +109,16 @@ public class MainActivity extends Activity {
         Log.i("position","onCreate");
         // Load the UI from res/layout/activity_main.xml
         setContentView(R.layout.activity_main);
+        mUpdateButton = findViewById(R.id.update_button);
+        mUpdateButton.setEnabled(false);
+        mUpdateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                requestLocationUpdate();
+                mUpdateButton.setEnabled(false);
+                ((Animatable)mUpdateButton.getDrawable()).start();
+            }
+        });
 
         mViewPager = findViewById(R.id.pager);
         int oldOrientation;
@@ -163,12 +183,16 @@ public class MainActivity extends Activity {
         Log.i("position","updateView");
         if (fetch) {
             if (location != null) {
+                tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), new ArrayList<Map<String, String>>());
+                mViewPager.setAdapter(tramStopPagerAdapter);
                 String url = baseUrl + location.getLatitude() + "&originCoordLong=" + location.getLongitude() + "&maxNo=200&format=json";
                 sendRequest(url);
             }
         }else{
             tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
             mViewPager.setAdapter(tramStopPagerAdapter);
+            mUpdateButton.setEnabled(true);
+            ((Animatable)mUpdateButton.getDrawable()).stop();
         }
     }
 
@@ -251,6 +275,8 @@ public class MainActivity extends Activity {
                         }
                         tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
                         mViewPager.setAdapter(tramStopPagerAdapter);
+                        mUpdateButton.setEnabled(true);
+                        ((Animatable)mUpdateButton.getDrawable()).stop();
                     }
 
                 }, new Response.ErrorListener() {
@@ -282,6 +308,10 @@ public class MainActivity extends Activity {
                         });
                     }
                     Log.i("VollyError", error.toString());
+                    mViewPager.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp));
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 200);
+                    layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+                    mViewPager.setLayoutParams(layoutParams);
                 }
             }
         }) {

@@ -1,10 +1,27 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:elevation="1dp"
+    android:background="@color/colorPrimaryDark"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <android.support.v4.view.ViewPager
         android:id="@+id/pager"
+        android:elevation="1dp"
+        android:layout_centerInParent="true"
+        android:background="@color/colorPrimaryDark"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="com.development.android.commuter.MainActivity" />
+    <ImageButton
+        android:id="@+id/update_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="5dp"
+        android:background="@drawable/update_location_bg"
+        android:layout_alignParentEnd="true"
+        android:contentDescription="@null"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="20dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/update_location_anim_vector"/>
 </RelativeLayout>

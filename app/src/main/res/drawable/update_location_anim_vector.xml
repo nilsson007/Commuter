@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1 -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/update_location_drawable">
+    <!-- 2 -->
+    <target
+        android:name="circle_arrow"
+        android:animation="@anim/update_location_rotate_anim" />
+    <!-- 3 -->
+    <target
+        android:name="position_marker"
+        android:animation="@anim/update_location_scale_anim" />
+</animated-vector>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1 -->
+    <objectAnimator
+        android:duration="700"
+        android:propertyName="rotation"
+        android:valueFrom="41"
+        android:valueTo="401"
+        android:repeatCount="infinite"
+        android:repeatMode="restart"
+        android:valueType="floatType" />
+</set>

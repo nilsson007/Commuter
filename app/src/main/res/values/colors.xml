@@ -3,4 +3,6 @@
     <color name="colorPrimary">#444</color>
     <color name="colorPrimaryDark">#333</color>
     <color name="colorAccent">#212121</color>
+    <color name="updateBackground">#006C93</color>
+    <color name="updateArrow">#FFadadad</color>
 </resources>

@@ -6,7 +6,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:elevation="4dp"
+        android:elevation="0dp"
         tools:context="com.development.android.commuter.TramStopFragment">
         <RelativeLayout
             android:layout_width="match_parent"
@@ -40,10 +40,9 @@
                 android:layout_centerInParent="true"
                 android:layout_width="45sp"
                 android:layout_height="45sp"
-                android:elevation="12dp"
                 android:layout_margin="2.5sp"
                 android:visibility="invisible"
-                android:background="@drawable/tram_stop_close_x"
+                android:background="@drawable/ic_cancel_black_24dp"
                 android:contentDescription="@null"
                 android:id="@+id/tram_stop_close"/>
         </RelativeLayout>

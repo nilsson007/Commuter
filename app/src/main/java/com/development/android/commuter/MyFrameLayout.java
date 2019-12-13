@@ -29,18 +29,10 @@ public class MyFrameLayout extends FrameLayout {
     }
 
     @Override
-    public void onAnimationEnd(){
-        super.onAnimationEnd();
-        if (this.closing) {
-            this.closing = false;
-        }
-    }
-
-    @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ScaleAnimation scaleAnimation = new ScaleAnimation(0,1,0,1, (float)pivotX, (float)pivotY);
-        scaleAnimation.setDuration(170);
+        ScaleAnimation scaleAnimation = new ScaleAnimation(0,1,0,1, ScaleAnimation.RELATIVE_TO_SELF, (float)pivotX, ScaleAnimation.ABSOLUTE, (float)pivotY);
+        scaleAnimation.setDuration(200);
         scaleAnimation.setFillAfter(true);
         AnimationSet animationSet = new AnimationSet(true);
         animationSet.addAnimation(scaleAnimation);
@@ -49,8 +41,8 @@ public class MyFrameLayout extends FrameLayout {
 
     void closeViewAnimation(){
         closing = true;
-        ScaleAnimation scaleAnimation = new ScaleAnimation(1,0,1,0, (float)pivotX, (float)pivotY);
-        scaleAnimation.setDuration(170);
+        ScaleAnimation scaleAnimation = new ScaleAnimation(1,0,1,0, ScaleAnimation.RELATIVE_TO_SELF, (float)pivotX, ScaleAnimation.ABSOLUTE, (float)pivotY);
+        scaleAnimation.setDuration(200);
         scaleAnimation.setFillAfter(true);
         AnimationSet animationSet = new AnimationSet(true);
         animationSet.addAnimation(scaleAnimation);

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="true">
+    <!-- 1 -->
+    <objectAnimator
+        android:duration="500"
+        android:propertyName="scaleX"
+        android:valueFrom="1.2"
+        android:valueTo="0"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse"
+        android:valueType="floatType" />
+
+    <!-- 2 -->
+    <objectAnimator
+        android:duration="500"
+        android:propertyName="scaleY"
+        android:valueFrom="1.2"
+        android:valueTo="0"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse"
+        android:valueType="floatType" />
+</set>
