@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<set xmlns:android="http://schemas.android.com/apk/res/android">
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="sequentially"
+    android:shareInterpolator="false">
     <!-- 1 -->
     <objectAnimator
         android:duration="700"
         android:propertyName="rotation"
         android:valueFrom="41"
         android:valueTo="401"
+        android:interpolator="@android:anim/accelerate_interpolator"
+        android:valueType="floatType" />
+    <!-- 2 -->
+    <objectAnimator
+        android:duration="300"
+        android:propertyName="rotation"
         android:repeatCount="infinite"
         android:repeatMode="restart"
+        android:valueFrom="41"
+        android:valueTo="401"
+        android:interpolator="@android:anim/linear_interpolator"
         android:valueType="floatType" />
 </set>

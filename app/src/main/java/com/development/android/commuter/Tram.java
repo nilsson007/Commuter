@@ -16,10 +16,10 @@ import android.widget.ListView;
 class Tram {
     String direction;
     public String number;
-    String waitTime1;
-    String waitTime2;
-    String signColor;
-    String textColor;
+    String waitTime1 = "-";
+    String waitTime2 = "-";
+    String signColor = "#555555";
+    String textColor = "#333333";
     String journeyUrl;
     int height;
     int nowTime;

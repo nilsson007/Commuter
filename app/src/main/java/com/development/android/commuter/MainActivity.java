@@ -1,8 +1,10 @@
 package com.development.android.commuter;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -13,9 +15,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
+import android.widget.ImageView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -32,7 +33,6 @@ import com.google.android.gms.location.LocationResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +70,8 @@ public class MainActivity extends Activity {
 
     int locationUpdatesCountDown = MIN_LOCATION_UPDATES;
 
+    ImageView errorImage;
+
     CountDownTimer locationUpdateTimer = new CountDownTimer(MAX_LOCATION_UPDATE_TIME, MAX_LOCATION_UPDATE_TIME) {
 
         public void onTick(long millisUntilFinished) {
@@ -103,6 +105,7 @@ public class MainActivity extends Activity {
 
     LocationRequest locationRequest = new LocationRequest();
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -119,6 +122,8 @@ public class MainActivity extends Activity {
                 ((Animatable)mUpdateButton.getDrawable()).start();
             }
         });
+
+        errorImage = findViewById(R.id.error_image);
 
         mViewPager = findViewById(R.id.pager);
         int oldOrientation;
@@ -138,13 +143,10 @@ public class MainActivity extends Activity {
 
         if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1)
             updateView(false);
-        else requestLocationUpdate();
-        // Init debug location
-        /*
-        location = new Location("PASSIVE_PROVIDER");
-        location.setLatitude(57.702833);
-        location.setLongitude(11.978622);
-        */
+        else {
+            requestLocationUpdate();
+            ((Animatable)mUpdateButton.getDrawable()).start();
+        }
     }
 
     @Override
@@ -152,6 +154,7 @@ public class MainActivity extends Activity {
         super.onRestart();
         tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), new ArrayList<Map<String, String>>());
         mViewPager.setAdapter(tramStopPagerAdapter);
+        ((Animatable)mUpdateButton.getDrawable()).start();
         requestLocationUpdate();
         Log.i("position","onRestart");
     }
@@ -192,7 +195,6 @@ public class MainActivity extends Activity {
             tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
             mViewPager.setAdapter(tramStopPagerAdapter);
             mUpdateButton.setEnabled(true);
-            ((Animatable)mUpdateButton.getDrawable()).stop();
         }
     }
 
@@ -219,6 +221,7 @@ public class MainActivity extends Activity {
                     null /* Looper */
             );
             locationUpdateTimer.start();
+
         }
     }
 
@@ -269,14 +272,16 @@ public class MainActivity extends Activity {
                                     stopsList.add(tmpMap);
                                 }
                             }
-
+                            tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
+                            mViewPager.setAdapter(tramStopPagerAdapter);
+                            errorImage.setVisibility(View.INVISIBLE);
                         } catch (JSONException e) {
+
                             e.printStackTrace();
+                            setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_nobussstop));
+                            endUpdateAnimation();
                         }
-                        tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
-                        mViewPager.setAdapter(tramStopPagerAdapter);
-                        mUpdateButton.setEnabled(true);
-                        ((Animatable)mUpdateButton.getDrawable()).stop();
+                        endUpdateAnimation();
                     }
 
                 }, new Response.ErrorListener() {
@@ -308,10 +313,8 @@ public class MainActivity extends Activity {
                         });
                     }
                     Log.i("VollyError", error.toString());
-                    mViewPager.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp));
-                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 200);
-                    layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
-                    mViewPager.setLayoutParams(layoutParams);
+                    setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp));
+                    endUpdateAnimation();
                 }
             }
         }) {
@@ -322,5 +325,26 @@ public class MainActivity extends Activity {
         };
         RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(nextTramRequest);
+    }
+    void endUpdateAnimation(){
+        mUpdateButton.setEnabled(true);
+        ((Animatable2)mUpdateButton.getDrawable()).stop();
+        mUpdateButton.setImageDrawable(getDrawable(R.drawable.update_location_stop_anim_vector));
+        final Animatable2 animatable =(Animatable2)mUpdateButton.getDrawable();
+        animatable.registerAnimationCallback(new Animatable2.AnimationCallback() {
+            @Override
+            public void onAnimationEnd(Drawable drawable) {
+                super.onAnimationEnd(drawable);
+                animatable.clearAnimationCallbacks();
+                mUpdateButton.setImageDrawable(getDrawable(R.drawable.update_location_anim_vector));
+            }
+        });
+        animatable.start();
+    }
+    void setError(Drawable drawable)
+    {
+        errorImage.clearAnimation();
+        errorImage.setImageDrawable(drawable);
+        errorImage.setVisibility(View.VISIBLE);
     }
 }

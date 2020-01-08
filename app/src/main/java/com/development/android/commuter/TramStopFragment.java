@@ -1,7 +1,6 @@
 package com.development.android.commuter;
 
-import android.graphics.PorterDuff;
-import android.graphics.drawable.LayerDrawable;
+
 import android.os.Bundle;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -9,10 +8,12 @@ import android.app.FragmentManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.widget.AbsListView;
 import android.widget.RelativeLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.ImageButton;
 
@@ -44,7 +45,7 @@ public class TramStopFragment extends Fragment {
      */
     private AuthorizationToken authorizationToken;
 
-    private ListView nextTramList;
+    private AbsListView nextTramList;
 
     private TramStopListAdapter nextTramAdapter;
 
@@ -71,6 +72,8 @@ public class TramStopFragment extends Fragment {
     private double poopUpClickY;
 
     final private Fragment thisFragment;
+
+    private boolean inScrolling = false;
 
     public TramStopFragment() {
 
@@ -167,6 +170,31 @@ public class TramStopFragment extends Fragment {
         TextView stopDist = rootView.findViewById(R.id.tram_stop_distance);
         TextView stopTime = rootView.findViewById(R.id.tram_stop_time);
 
+        nextTramList.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                View updateButton = ((MainActivity)getContext()).mUpdateButton;
+                int motion = event.getActionMasked();
+                if (motion == MotionEvent.ACTION_MOVE && !inScrolling) {
+                    inScrolling = true;
+                    AlphaAnimation anim = new AlphaAnimation(1.0f,0.3f);
+                    anim.setDuration(200);
+                    anim.setFillAfter(true);
+                    anim.setFillEnabled(true);
+                    updateButton.startAnimation(anim);
+                }
+                if (motion == MotionEvent.ACTION_UP || motion == MotionEvent.ACTION_CANCEL) {
+                    inScrolling = false;
+                    AlphaAnimation anim = new AlphaAnimation(0.3f,1f);
+                    anim.setDuration(200);
+                    anim.setFillAfter(true);
+                    anim.setFillEnabled(true);
+                    updateButton.startAnimation(anim);
+                }
+                return false;
+            }
+        });
+
         name = getArguments().getString("name");
         String dist = getArguments().getString("dist");
         id = getArguments().getString("id");
@@ -199,7 +227,7 @@ public class TramStopFragment extends Fragment {
             close.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ((TramStopFragment)thisFragment.getParentFragment()).closePoopUpFragment();
+                    ((TramStopFragment)thisFragment.getParentFragment()).closePopUpFragment();
                     close.setEnabled(false);
                 }
             });
@@ -207,6 +235,7 @@ public class TramStopFragment extends Fragment {
 
         stopName.setText(name);
         stopDist.setText(dist);
+
 
         // Checks if screen was just rotated
         int oldOrientation;
@@ -239,6 +268,8 @@ public class TramStopFragment extends Fragment {
         try {
             jsonResponse = new JSONObject(response);
         } catch (JSONException e) {
+            Tram tram = new Tram("----");
+            tramList.add(tram);
             e.printStackTrace();
             Log.i("Json Departure Response", response);
         }
@@ -301,6 +332,10 @@ public class TramStopFragment extends Fragment {
             }
 
         });
+        if (tramList.size() == 0){
+            Tram tram = new Tram("?");
+            tramList.add(tram);
+        }
     }
     String makeUrl(){
         String year = String.format(Locale.US, "%04d", time.get(Calendar.YEAR));
@@ -351,7 +386,7 @@ public class TramStopFragment extends Fragment {
         float density = getContext().getResources().getDisplayMetrics().density;
         return Math.round((float) dp * density);
     }
-    void closePoopUpFragment(){
+    void closePopUpFragment(){
         try {
             ((MyFrameLayout) childFragment.getView().getParent()).closeViewAnimation();
         } catch(Exception e) {}
