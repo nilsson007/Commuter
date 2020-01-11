@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material_design_icons/notification/ic_time_to_leave_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material_design_icons/communication/ic_location_off_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -33,10 +33,9 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="adadad" />
-                            <entry key="outputName" value="ic_nobussstop" />
-                            <entry key="sourceFile" value="$USER_HOME$/Desktop/NoBussStop.svg" />
+                            <entry key="outputName" value="ic_location_off_black_24dp" />
+                            <entry key="sourceFile" value="$USER_HOME$/Desktop/go_commuter_icon.svg" />
                           </map>
                         </option>
                       </PersistentState>

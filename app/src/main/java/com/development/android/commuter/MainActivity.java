@@ -8,11 +8,10 @@ import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.app.Activity;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -44,15 +43,13 @@ public class MainActivity extends Activity {
 
     static final byte MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 67;
 
-    //static final int MIN_ACCURACY = 150;
+    static final int ERROR_NO_ERROR = 0;
 
-    static final int MIN_LOCATION_UPDATES = 1;
+    static final int ERROR_NO_INTERNET = 1;
 
-    static final int MAX_LOCATION_UPDATE_TIME = 5000;
+    static final int ERROR_NO_LOCATION = 2;
 
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
+    static final int ERROR_LOCATION_OFF = 3;
 
     ViewPager mViewPager;
 
@@ -68,21 +65,9 @@ public class MainActivity extends Activity {
 
     ImageButton mUpdateButton;
 
-    int locationUpdatesCountDown = MIN_LOCATION_UPDATES;
-
     ImageView errorImage;
 
-    CountDownTimer locationUpdateTimer = new CountDownTimer(MAX_LOCATION_UPDATE_TIME, MAX_LOCATION_UPDATE_TIME) {
-
-        public void onTick(long millisUntilFinished) {
-
-        }
-
-        public void onFinish() {
-            mFusedLocationClient.removeLocationUpdates(locationCallback);
-            updateView(true);
-        }
-    };
+    private int error = ERROR_NO_ERROR;
 
     LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -92,13 +77,9 @@ public class MainActivity extends Activity {
                 return;
             }
             for (Location _location : locationResult.getLocations()) {
-                //if ((_location.getAccuracy() < MIN_ACCURACY) && (--locationUpdatesCountDown <= 0 )) {
-                    location = _location;
-                    locationUpdateTimer.cancel();
-                    updateView(true);
-                    mFusedLocationClient.removeLocationUpdates(locationCallback);
-                    locationUpdatesCountDown = MIN_LOCATION_UPDATES;
-                //}
+                location = _location;
+                updateView(true);
+                mFusedLocationClient.removeLocationUpdates(locationCallback);
             }
         }
     };
@@ -130,6 +111,7 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, savedInstanceState.getString("token"));
             oldOrientation = savedInstanceState.getInt("orientation");
+            error = savedInstanceState.getInt("error");
             stopsList = (ArrayList<Map<String, String>>)savedInstanceState.getSerializable("stopList");
         } else {
             authorizationToken = AuthorizationToken.initializeAuthToken(this, null);
@@ -141,8 +123,21 @@ public class MainActivity extends Activity {
         locationRequest.setInterval(200);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1)
+        if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) {
+            if (error == ERROR_NO_INTERNET) {
+                setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp),ERROR_NO_INTERNET);
+                errorImage.setVisibility(View.VISIBLE);
+            }
+            else if (error == ERROR_NO_LOCATION) {
+                setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_nobussstop),ERROR_NO_LOCATION);
+                errorImage.setVisibility(View.VISIBLE);
+            }
+            else if (error == ERROR_LOCATION_OFF) {
+                setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_location_off_black_24dp),ERROR_LOCATION_OFF);
+                errorImage.setVisibility(View.VISIBLE);
+            }
             updateView(false);
+        }
         else {
             requestLocationUpdate();
             ((Animatable)mUpdateButton.getDrawable()).start();
@@ -179,6 +174,7 @@ public class MainActivity extends Activity {
         outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putString("token", authorizationToken.getToken());
         outState.putSerializable("stopList", stopsList);
+        outState.putInt("error", error);
         super.onSaveInstanceState(outState);
     }
 
@@ -220,8 +216,9 @@ public class MainActivity extends Activity {
                     locationCallback,
                     null /* Looper */
             );
-            locationUpdateTimer.start();
-
+        }
+        else {
+            setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_location_off_black_24dp), ERROR_LOCATION_OFF);
         }
     }
 
@@ -278,10 +275,11 @@ public class MainActivity extends Activity {
                         } catch (JSONException e) {
 
                             e.printStackTrace();
-                            setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_nobussstop));
+                            setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_nobussstop), ERROR_NO_LOCATION);
                             endUpdateAnimation();
                         }
                         endUpdateAnimation();
+                        error = ERROR_NO_ERROR;
                     }
 
                 }, new Response.ErrorListener() {
@@ -313,7 +311,7 @@ public class MainActivity extends Activity {
                         });
                     }
                     Log.i("VollyError", error.toString());
-                    setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp));
+                    setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp), ERROR_NO_INTERNET);
                     endUpdateAnimation();
                 }
             }
@@ -341,10 +339,11 @@ public class MainActivity extends Activity {
         });
         animatable.start();
     }
-    void setError(Drawable drawable)
+    void setError(Drawable drawable, int error_state)
     {
         errorImage.clearAnimation();
         errorImage.setImageDrawable(drawable);
         errorImage.setVisibility(View.VISIBLE);
+        error = error_state;
     }
 }

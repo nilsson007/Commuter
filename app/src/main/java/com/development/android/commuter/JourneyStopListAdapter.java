@@ -65,7 +65,7 @@ public class JourneyStopListAdapter extends ArrayAdapter<JourneyStop> {
                 args.putString("dist", "");
                 args.putString("id", stop.id);
                 args.putSerializable("time", stop.calTime);
-                args.putBoolean("poopUp",true);
+                args.putBoolean("popUp",true);
                 fragment.setArguments(args);
                 parentFragment.setChildFragment(fragment, lastTouchDownX, lastTouchDownY);
             }

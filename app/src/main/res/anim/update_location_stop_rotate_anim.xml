@@ -7,6 +7,7 @@
         android:propertyName="rotation"
         android:valueFrom="41"
         android:valueTo="401"
+        android:fillAfter="true"
         android:interpolator="@android:anim/decelerate_interpolator"
         android:valueType="floatType" />
 </set>

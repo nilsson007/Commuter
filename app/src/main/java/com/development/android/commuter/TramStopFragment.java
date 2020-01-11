@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.FragmentManager;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -16,6 +15,7 @@ import android.widget.AbsListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ImageButton;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -67,9 +67,9 @@ public class TramStopFragment extends Fragment {
 
     private int position;
 
-    private double poopUpClickX;
+    private double popUpClickX;
 
-    private double poopUpClickY;
+    private double popUpClickY;
 
     final private Fragment thisFragment;
 
@@ -85,8 +85,8 @@ public class TramStopFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putSerializable("tram list", tramList);
-        outState.putDouble("poopUpClickX", poopUpClickX);
-        outState.putDouble("poopUpClickY", poopUpClickY);
+        outState.putDouble("popUpClickX", popUpClickX);
+        outState.putDouble("popUpClickY", popUpClickY);
         if(childFragment != null){
             getChildFragmentManager().putFragment(outState, "child" + position, childFragment);
         }
@@ -204,7 +204,7 @@ public class TramStopFragment extends Fragment {
 
         time = (Calendar) getArguments().getSerializable("time");
 
-        if(!getArguments().getBoolean("poopUp")) {
+        if(!getArguments().getBoolean("popUp")) {
             swipeRefreshLayout.setOnRefreshListener(
                     new SwipeRefreshLayout.OnRefreshListener() {
                         @Override
@@ -250,10 +250,10 @@ public class TramStopFragment extends Fragment {
 
         if (oldOrientation != this.getResources().getConfiguration().orientation && oldOrientation != -1) {
             updateView(false);
-            poopUpClickX = savedInstanceState.getDouble("poopUpClickX");
-            poopUpClickY = savedInstanceState.getDouble("poopUpClickY");
+            popUpClickX = savedInstanceState.getDouble("popUpClickX");
+            popUpClickY = savedInstanceState.getDouble("popUpClickY");
             if (fragment != null){
-                setChildFragment((TramStopFragment) fragment,poopUpClickX,poopUpClickY);
+                setChildFragment((TramStopFragment) fragment,popUpClickX,popUpClickY);
             }
         }
         else {
@@ -349,8 +349,8 @@ public class TramStopFragment extends Fragment {
     }
     void setChildFragment(TramStopFragment fragment, double x, double y){
         childFragment = fragment;
-        poopUpClickX = x;
-        poopUpClickY = y;
+        popUpClickX = x;
+        popUpClickY = y;
         MyFrameLayout frame = new MyFrameLayout(getContext(),x,y){
             @Override
             public void onAnimationEnd(){

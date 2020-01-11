@@ -4,10 +4,10 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
-import android.support.v4.view.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager.widget.PagerAdapter;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,7 +52,7 @@ public class TramStopPagerAdapter extends PagerAdapter {
         args.putString("id", tramStops.get(position).get("id"));
         args.putInt("position", position);
         args.putSerializable("time", Calendar.getInstance());
-        args.putBoolean("poopUp",false);
+        args.putBoolean("popUp",false);
         fragment.setArguments(args);
         return fragment;
     }
