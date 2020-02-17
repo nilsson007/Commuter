@@ -72,7 +72,6 @@ public class MainActivity extends Activity {
     LocationCallback locationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
-            Log.i("position", "location update");
             if (locationResult == null) {
                 return;
             }
@@ -90,7 +89,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i("position","onCreate");
         // Load the UI from res/layout/activity_main.xml
         setContentView(R.layout.activity_main);
         mUpdateButton = findViewById(R.id.update_button);
@@ -151,7 +149,6 @@ public class MainActivity extends Activity {
         mViewPager.setAdapter(tramStopPagerAdapter);
         ((Animatable)mUpdateButton.getDrawable()).start();
         requestLocationUpdate();
-        Log.i("position","onRestart");
     }
 
     @Override
@@ -170,7 +167,6 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.i("position","onSaveInstanceState");
         outState.putInt("orientation", this.getResources().getConfiguration().orientation);
         outState.putString("token", authorizationToken.getToken());
         outState.putSerializable("stopList", stopsList);
@@ -179,7 +175,6 @@ public class MainActivity extends Activity {
     }
 
     private void updateView(boolean fetch) {
-        Log.i("position","updateView");
         if (fetch) {
             if (location != null) {
                 tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), new ArrayList<Map<String, String>>());
@@ -240,7 +235,6 @@ public class MainActivity extends Activity {
     }
 
     private void sendRequest(String url) {
-        Log.i("position","sendRequest");
         StringRequest nextTramRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override
@@ -272,6 +266,7 @@ public class MainActivity extends Activity {
                             tramStopPagerAdapter = new TramStopPagerAdapter(getFragmentManager(), stopsList);
                             mViewPager.setAdapter(tramStopPagerAdapter);
                             errorImage.setVisibility(View.INVISIBLE);
+                            error = ERROR_NO_ERROR;
                         } catch (JSONException e) {
 
                             e.printStackTrace();
@@ -279,7 +274,6 @@ public class MainActivity extends Activity {
                             endUpdateAnimation();
                         }
                         endUpdateAnimation();
-                        error = ERROR_NO_ERROR;
                     }
 
                 }, new Response.ErrorListener() {
@@ -297,7 +291,6 @@ public class MainActivity extends Activity {
                             });
                             break;
                         default:
-                            Log.i("NetworkResponse", Integer.toString(error.networkResponse.statusCode));
                             break;
                     }
                 } else {
@@ -310,7 +303,6 @@ public class MainActivity extends Activity {
                             }
                         });
                     }
-                    Log.i("VollyError", error.toString());
                     setError(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_signal_wifi_off_black_24dp), ERROR_NO_INTERNET);
                     endUpdateAnimation();
                 }

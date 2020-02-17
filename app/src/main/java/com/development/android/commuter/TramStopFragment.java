@@ -53,8 +53,6 @@ public class TramStopFragment extends Fragment {
 
     public String name;
 
-    private static String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=";
-
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private ArrayList<Tram> tramList;
@@ -122,7 +120,6 @@ public class TramStopFragment extends Fragment {
                                 });
                                 break;
                             default:
-                                Log.i("NetworkResponse", Integer.toString(error.networkResponse.statusCode));
                                 break;
                         }
                     } else {
@@ -135,7 +132,6 @@ public class TramStopFragment extends Fragment {
                                 }
                             });
                         }
-                        Log.i("NetworkResponse", error.toString());
                     }
                 }
             }) {
@@ -146,19 +142,11 @@ public class TramStopFragment extends Fragment {
             };
             RequestQueue queue = Volley.newRequestQueue(getContext());
             queue.add(nextTramRequest);
-            Log.i("position", "send request");
         }else{
             nextTramAdapter = new TramStopListAdapter(nextTramList.getContext(), tramList, name, this);
             nextTramList.setAdapter(nextTramAdapter);
             nextTramAdapter.notifyDataSetChanged();
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.i("commuter", "onDestroy");
-
     }
 
     @Override
@@ -271,7 +259,6 @@ public class TramStopFragment extends Fragment {
             Tram tram = new Tram("----");
             tramList.add(tram);
             e.printStackTrace();
-            Log.i("Json Departure Response", response);
         }
         JSONArray jsonArray = jsonResponse.optJSONObject("DepartureBoard").optJSONArray("Departure");
         if (jsonArray != null) {
@@ -344,6 +331,7 @@ public class TramStopFragment extends Fragment {
         String hour = String.format(Locale.US, "%02d", time.get(Calendar.HOUR_OF_DAY));
         String min = String.format(Locale.US, "%02d", time.get(Calendar.MINUTE));
 
+        String baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=";
         return baseUrl + id + "&date=" + year + "-" + month + "-" + day + "&time=" + hour + ":" + min + "&timeSpan=90&format=json&needJourneyDetail=1&maxDeparturesPerLine=3";
 
     }

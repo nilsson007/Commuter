@@ -85,7 +85,7 @@ class Tram {
                     cal.setTime(sdf.parse(timeStr));// all done
                     stop.calTime = cal;
                 }catch (ParseException e){
-                    Log.i("ParseException","date parse");
+
                 }
                 journeyStops.add(stop);
             }

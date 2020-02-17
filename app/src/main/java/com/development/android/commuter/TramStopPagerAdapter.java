@@ -215,8 +215,6 @@ public class TramStopPagerAdapter extends PagerAdapter {
 
                         f.setMenuVisibility(false);
                         this.mFragments.set(index, f);
-                    } else {
-                        Log.w("TramStopPagerAdapt", "Bad fragment at key " + key);
                     }
                 }
             }

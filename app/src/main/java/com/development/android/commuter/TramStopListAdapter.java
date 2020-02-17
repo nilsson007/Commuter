@@ -120,7 +120,6 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
                 getJourneyRequestResponseListener(lv,tram), new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.i("Poop", error.toString());
 
             }
         }) {
@@ -143,7 +142,6 @@ public class TramStopListAdapter extends ArrayAdapter<Tram> {
                     jsonArray = jsonResponse.optJSONObject("JourneyDetail").optJSONArray("Stop");
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.i("Json Departure Response", response);
                 }
                 if (jsonArray != null) {
                     tram.makeJourneyStopList(jsonArray, name);
